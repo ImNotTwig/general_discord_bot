@@ -53,7 +53,7 @@ with open("DATA/scalemon.json", encoding='utf8') as file:
 
 with open("DATA/tmlocation.json", encoding='utf8') as file:
     tmlocation_dict = helperfunctions.listToDict('tmname',  json.load(file))
-    tm_name_number_mapping = dict(zip( np.char.mod('%d', np.arange(1, 121, 1)) , tmlocation_dict.keys())) #making a number string mapping for the tm dictionary
+    tm_name_number_mapping = dict(zip(np.char.mod('%d', np.arange(1, 121, 1)), tmlocation_dict.keys())) #making a number string mapping for the tm dictionary
 
 with open("DATA/tm_and_tutor.json", encoding='utf8') as file:
     tm_and_tutor_dict = helperfunctions.listToDict('name',  json.load(file))
@@ -94,7 +94,8 @@ async def on_voice_state_update(member, before, after):
 
 
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'
+}
 
 # List with all the sessions currently active.
 sessions = []
@@ -102,11 +103,6 @@ sessions = []
 ############-QUEUE FUNCTIONS-##################################################################################
 
 def check_session(ctx):
-    """
-    Checks if there is a session with the same characteristics (guild and channel) as ctx param.
-    :param ctx: discord.ext.commands.Context
-    :return: session()
-    """
     if len(sessions) > 0:
         for i in sessions:
             if i.guild == ctx.guild and i.channel == ctx.author.voice.channel:
@@ -122,13 +118,6 @@ def check_session(ctx):
 
 
 def prepare_continue_queue(ctx):
-    """
-    Used to call next song in queue.
-    Because lambda functions cannot call async functions, I found this workaround in discord's api documentation
-    to let me continue playing the queue when the current song ends.
-    :param ctx: discord.ext.commands.Context
-    :return: None
-    """
     fut = asyncio.run_coroutine_threadsafe(continue_queue(ctx), bot.loop)
     try:
         fut.result()
@@ -137,13 +126,6 @@ def prepare_continue_queue(ctx):
 
 
 async def continue_queue(ctx):
-    """
-    Check if there is a next in queue then proceeds to play the next song in queue.
-    As you can see, in this method we create a recursive loop using the prepare_continue_queue to make sure we pass
-    through all songs in queue without any mistakes or interaction.
-    :param ctx: discord.ext.commands.Context
-    :return: None
-    """
     session = check_session(ctx)
     if not session.q.theres_next():
         await ctx.send("The queue is empty")
@@ -172,14 +154,6 @@ Now playing: {session.q.current_music.title}""")
 
 @bot.command(name='play')
 async def play(ctx, *, arg):
-    """
-    Checks where the command's author is, searches for the music required, joins the same channel as the command's
-    author and then plays the audio directly from YouTube.
-    :param ctx: discord.ext.commands.Context
-    :param arg: str
-        arg can be url to video on YouTube or just as you would search it normally.
-    :return: None
-    """
     try:
         voice_channel = ctx.author.voice.channel
 
@@ -236,17 +210,8 @@ Added to queue: {title}""")
 
 @bot.command(name='next', aliases=['skip'])
 async def skip(ctx):
-    """
-    Skips the current song, playing the next one in queue if there is one.
-    :param ctx: discord.ext.commands.Context
-    :return: None
-    """
     # Finds author's session.
     session = check_session(ctx)
-    # If there isn't any song to be played next, return.
-    if not session.q.theres_next():
-        await ctx.send("No more songs are in the queue")
-        return
 
     # Finds an available voice client for the bot.
     voice = discord.utils.get(bot.voice_clients, guild=session.guild)
@@ -255,6 +220,11 @@ async def skip(ctx):
     # a recursive loop and the current song is already going to play the next song when it stops.
     if voice.is_playing():
         voice.stop()
+        # If there isn't any song to be played next, clear the queue and then return.
+        if session.q.theres_next() == False:
+            session.q.clear_queue()
+            return
+
         return
     else:
         # If nothing is playing, finds the next song and starts playing it.
@@ -265,13 +235,8 @@ async def skip(ctx):
 
 ############-QUEUE COMMAND-####################################################################################
 
-@bot.command(name='queue')
+@bot.command(name='queue', aliases=['q'])
 async def queue(ctx):
-    """
-    A debug command to find session id, what is current playing and what is on the queue.
-    :param ctx: discord.ext.commands.Context
-    :return: None
-    """
     session = check_session(ctx)
     # await ctx.send(f"Session ID: {session.id}")
     await ctx.send(f"Current song: {session.q.current_music.title}")
@@ -285,15 +250,25 @@ async def queue(ctx):
     )
     await ctx.send(embed=embed_to_send)
 
+############-REMOVE COMMAND-###################################################################################
+
+@bot.command(name="remove")
+async def remove(ctx, *args):
+    session = check_session(ctx)
+    queue = session.q.queue
+
+    if len(queue) == 0:
+        return
+    arg = int(args[0]) - 1
+
+    await ctx.send(f"removed {queue[arg][0]} from the queue")
+    queue.pop(arg)
+    return
+
 ############-LEAVE COMMAND-####################################################################################
 
 @bot.command(name='leave', aliases=["quit", "fuckoff", "disconnect"])
 async def leave(ctx):
-    """
-    If bot is connected to a voice channel, it leaves it.
-    :param ctx: discord.ext.commands.Context
-    :return: None
-    """
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     if voice.is_connected:
         check_session(ctx).q.clear_queue()
@@ -305,11 +280,6 @@ async def leave(ctx):
 
 @bot.command(name='pause')
 async def pause(ctx):
-    """
-    If playing audio, pause it.
-    :param ctx: discord.ext.commands.Context
-    :return: None
-    """
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     if voice.is_playing():
         voice.pause()
@@ -320,11 +290,6 @@ async def pause(ctx):
 
 @bot.command(name='resume')
 async def resume(ctx):
-    """
-    If audio is paused, resumes playing it.
-    :param ctx: discord.ext.commands.Context
-    :return: None
-    """
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     if voice.is_paused:
         voice.resume()
@@ -335,11 +300,6 @@ async def resume(ctx):
 
 @bot.command(name='stop')
 async def stop(ctx):
-    """
-    Stops playing audio and clears the session's queue.
-    :param ctx: discord.ext.commands.Context
-    :return: None
-    """
     session = check_session(ctx)
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     if voice.is_playing:
@@ -393,7 +353,8 @@ async def moves(ctx, *args):
 @bot.command(name='eggmoves')                                      #EGGMOVES
 async def eggmoves(ctx, *args):
     args = helperfunctions.normalizeString(' '.join(args))
-    egg_moves_element = eggmoves_dict.get(args ,False)             #querying for the dictionary
+    egg_moves_element = eggmoves_dict.get(args, False)             #querying for the dictionary
+
     if egg_moves_element == False:                                 #if no dictionary found, jump out of this
         await ctx.send(constants.invalid_text)                     #error message
         return
@@ -420,8 +381,8 @@ async def ability(ctx, *args):
     ability1, ability2, hiddenAbility = [str(x).lower().title()    #extracting abilities and ability descriptions for embedText
                                          for x in abilities_element['Ability']]
 
-    ability1_desc, ability2_desc, hidden_ability_desc =  [ ability_desc_dict[helperfunctions.normalizeString(x)]['effect']
-                                                           for x in (ability1, ability2, hiddenAbility)]
+    ability1_desc, ability2_desc, hidden_ability_desc = [ability_desc_dict[helperfunctions.normalizeString(x)]['effect']
+                                                         for x in (ability1, ability2, hiddenAbility)]
 
     embedText = helperfunctions.StringFormatter(
         constants.ability_display,
@@ -447,8 +408,8 @@ async def tmlocation(ctx, *args):
     q = args
 
     searchThis = tm_name_number_mapping.get(q, q)                   #checking if the query is present in the mapping
-    #can only be possible if query was a number between 1 and 120 (inclusive)
-    # obtain name of tm to search here
+                                                                    #can only be possible if query was a number between 1 and 120 (inclusive)
+                                                                    # obtain name of tm to search here
 
     tmlocation_element = tmlocation_dict.get(searchThis, False)     #querying using the name now
 
@@ -552,7 +513,7 @@ async def difficulty(ctx):
             name=n,
             value=v,
             inline=False)                                           #inline commands not supported on mobile, it lets you have at most 3 columns in your embeds
-    await ctx.send(embed=embedToSend)                             #sending the embed
+    await ctx.send(embed=embedToSend)                               #sending the embed
     return
 
 ############-SHINY COMMAND-####################################################################################
@@ -599,7 +560,7 @@ async def breeding(ctx):
             name=n,
             value=v,
             inline=False)                                           #inline commands not supported on mobile, it lets you have at most 3 columns in your embeds
-    await ctx.send(embed=embedToSend)                             #sending the embed
+    await ctx.send(embed=embedToSend)                               #sending the embed
     return
 
 ############-CAPS COMMAND-#####################################################################################
@@ -789,26 +750,26 @@ async def gifts(interaction: discord.interactions, *args):
 
     pages = []
 
-    for i in range(0, numOfPagesGifts):                             #Producing the pages
-        pages.append(discord.Embed(title = f"Gift Page #{i+1}"))
+    for i in range(0, numOfPagesGifts):                              #Producing the pages
+        pages.append(discord.Embed(title=f"Gift Page #{i+1}"))
 
-        for j in range(0, constants.maxEntriesPerPageGifts):        #adding information to the pages
+        for j in range(0, constants.maxEntriesPerPageGifts):         #adding information to the pages
             currentIndex = j + i * constants.maxEntriesPerPageGifts
             if currentIndex == len(gifts_dict[search_key]):
                 break
             pages[i].add_field(
-                name=gifts_dict[search_key][currentIndex][1],      #pokemon name
+                name=gifts_dict[search_key][currentIndex][1],        #pokemon name
                 value=f'`{gifts_dict[search_key][currentIndex][0]}`', #gift code
                 inline=False
             )
 
-    for p in pages:                                                 #adding the pages to the menu
+    for p in pages:                                                  #adding the pages to the menu
         menu.add_page(p)
 
     menu.add_button(ViewButton.back())
     menu.add_button(ViewButton.next())
 
-    await menu.start()                                              #sending the embed
+    await menu.start()                                               #sending the embed
     return
 
 ###############################################################################################################
