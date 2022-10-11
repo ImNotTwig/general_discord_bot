@@ -5,6 +5,7 @@ import youtube_dl
 from discord.ext import commands
 from lyricsgenius import Genius
 import json
+import os
 
 from cogs.Music import utilities
 
@@ -15,7 +16,11 @@ FFMPEG_OPTIONS = {
 with open("config.json", 'r+', encoding="utf8") as file:
     config = json.load(file)
 
-genius = Genius(access_token=config['tokens']['genius_token'], remove_section_headers=True)
+if "tokens" in config.keys():
+    genius = Genius(access_token=config['tokens']['genius_token'], remove_section_headers=True)
+else:
+    token = os.getenv('genius_token')
+    genius = Genius(access_token=token, remove_section_headers=True)
 
 # List with all the sessions currently active.
 sessions = []
