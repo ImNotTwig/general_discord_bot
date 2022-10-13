@@ -1,3 +1,7 @@
 .idea
 discord_bot.iml
 config.json
+venv
+.config
+.upm
+.git

@@ -4,6 +4,9 @@ import json
 
 with open('cogs/Moderation/mute_roles.json', 'r+') as file:
     mute_role_dict = json.load(file)
+with open('config.json', 'r+') as file:
+    config = json.load(file)
+user_spam_count = {}
 
 ############-MODERATION COMMANDS-##############################################################################
 
@@ -39,7 +42,7 @@ class ModerationCommands(commands.Cog):
         await ctx.send(f'User {member.mention} has been banned')
         return
 
-############-MUTE COMMAND_#####################################################################################
+############-MUTE COMMAND-#####################################################################################
 
     @commands.command(name="mute", pass_context=True)
     @commands.has_permissions(manage_messages=True, manage_roles=True)
@@ -58,7 +61,7 @@ class ModerationCommands(commands.Cog):
         await ctx.send(f'{member} has been muted')
         return
 
-############-UNMUTE COMMAND_###################################################################################
+############-UNMUTE COMMAND-###################################################################################
 
     @commands.command(name="unmute", pass_context=True)
     @commands.has_permissions(manage_messages=True, manage_roles=True)
@@ -73,7 +76,7 @@ class ModerationCommands(commands.Cog):
         await ctx.send(f'{member} has been un-muted')
         return
 
-############-MUTEROLE COMMAND_#################################################################################
+############-MUTEROLE COMMAND-#################################################################################
 
     @commands.command(name='muterole')
     @commands.has_permissions(manage_roles=True)
@@ -85,5 +88,39 @@ class ModerationCommands(commands.Cog):
         with open('cogs/Moderation/mute_roles.json', 'r+') as file:
             json.dump(mute_role_dict, file, indent=4)
 
-        await ctx.send(f'set mute role to {role}')
+        await ctx.send(f'Set mute role to {role}.')
         return
+
+############-ANTISPAM-#########################################################################################
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        #if the antispam feature is turned on
+        if config['spam_settings']['antispam'] == True:
+            if str(message.author.id) not in user_spam_count.keys():
+                #if the users id is not in the dictionary add it 
+                user_spam_count[str(message.author.id)] = [0, message.content]
+
+            if user_spam_count[str(message.author.id)][1] != message.content:
+                #if the message in the users spam count is not the same reset the counter
+                user_spam_count[str(message.author.id)] = [0, message.content]
+                
+            if user_spam_count[str(message.author.id)][0] == 0:
+                #if the spam count is 0 set it to 1
+                user_spam_count[str(message.author.id)] = [1, message.content]
+                
+            elif user_spam_count[str(message.author.id)][0] == config['spam_settings']['spam_count'] - 1:
+                #if the user has sent the same message the amount of times in a row 
+                #that is defined by the config they will be muted
+                mute_role_name = mute_role_dict[str(message.guild.id)]
+                mute_role = discord.utils.get(message.guild.roles, name=mute_role_name)
+                
+                await message.author.add_roles(mute_role)
+                await message.channel.send(f"{message.author} has been muted for spamming.")
+                user_spam_count[str(message.author.id)][0] = 0
+                
+                
+            else: 
+                #add to the counter
+                user_spam_count[str(message.author.id)][0] += 1
+                
