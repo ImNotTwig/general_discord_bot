@@ -6,6 +6,7 @@ import os
 
 from cogs.Unbound.unbound import UnboundCommands
 from cogs.Music.music import MusicCommands
+from cogs.Moderation.moderation import ModerationCommands
 
 ###############################################################################################################
 
@@ -45,6 +46,7 @@ async def on_voice_state_update(member, before, after):
 if __name__ == '__main__':
     asyncio.run(bot.add_cog(UnboundCommands(bot)))
     asyncio.run(bot.add_cog(MusicCommands(bot)))
+    asyncio.run(bot.add_cog(ModerationCommands(bot)))
 
     if "tokens" in config.keys():
         bot.run(config['tokens']["discord_token"])
