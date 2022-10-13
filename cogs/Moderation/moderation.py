@@ -95,32 +95,43 @@ class ModerationCommands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        author_id = str(message.author.id)
+        words_in_message = message.content.split()
+        for word in config['word_blacklist']:
+            if word in words_in_message:
+                
+        #if author has the manage messages permission
+        if message.author.guild_permissions.manage_messages == True:
+            return
+        #if the author is a bot
+        if message.author.bot == True:
+            return 
         #if the antispam feature is turned on
         if config['spam_settings']['antispam'] == True:
-            if str(message.author.id) not in user_spam_count.keys():
+            if author_id not in user_spam_count.keys():
                 #if the users id is not in the dictionary add it 
-                user_spam_count[str(message.author.id)] = [0, message.content]
+                user_spam_count[author_id] = [0, message.content]
 
-            if user_spam_count[str(message.author.id)][1] != message.content:
+            if user_spam_count[author_id][1] != message.content:
                 #if the message in the users spam count is not the same reset the counter
-                user_spam_count[str(message.author.id)] = [0, message.content]
+                user_spam_count[author_id] = [0, message.content]
                 
-            if user_spam_count[str(message.author.id)][0] == 0:
+            if user_spam_count[author_id][0] == 0:
                 #if the spam count is 0 set it to 1
-                user_spam_count[str(message.author.id)] = [1, message.content]
+                user_spam_count[author_id][0] = 1
                 
-            elif user_spam_count[str(message.author.id)][0] == config['spam_settings']['spam_count'] - 1:
+            elif user_spam_count[author_id][0] == config['spam_settings']['spam_count'] - 1:
                 #if the user has sent the same message the amount of times in a row 
                 #that is defined by the config they will be muted
-                mute_role_name = mute_role_dict[str(message.guild.id)]
+                mute_role_name = mute_role_dict[author_id]
                 mute_role = discord.utils.get(message.guild.roles, name=mute_role_name)
                 
                 await message.author.add_roles(mute_role)
-                await message.channel.send(f"{message.author} has been muted for spamming.")
-                user_spam_count[str(message.author.id)][0] = 0
+                await message.channel.send(f"{message.author.mention} has been muted for spamming.")
+                user_spam_count[author_id][0] = 0
                 
                 
             else: 
                 #add to the counter
-                user_spam_count[str(message.author.id)][0] += 1
+                user_spam_count[author_id][0] += 1
                 
