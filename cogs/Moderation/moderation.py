@@ -1,12 +1,15 @@
 import discord
 from discord.ext import commands
 import json
+from collections import OrderedDict
 
-with open('cogs/Moderation/mute_roles.json', 'r+') as file:
-    mute_role_dict = json.load(file)
-with open('config.json', 'r+') as file:
-    config = json.load(file)
-user_spam_count = {}
+with open('cogs/Moderation/mute_roles.json', 'r+') as mute_role_file:
+    mute_role_dict = json.load(mute_role_file)
+
+with open('config.json', 'r+') as config_file:
+    config = json.load(config_file)
+
+user_spam_count = OrderedDict()
 
 ############-MODERATION COMMANDS-##############################################################################
 
@@ -16,12 +19,12 @@ class ModerationCommands(commands.Cog):
 
 ############-KICK COMMAND-#####################################################################################
 
-    @commands.command(name="kick", pass_context = True)
+    @commands.command(name="kick", pass_context=True)
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx, member: discord.Member, *, reason=None):
 
         await ctx.guild.kick(member)
-        if reason != None:
+        if reason is not None:
             await ctx.send(f'User {member.mention} has been kicked for {reason}')
             return
 
@@ -30,12 +33,12 @@ class ModerationCommands(commands.Cog):
 
 ############-BAN COMMAND-######################################################################################
 
-    @commands.command(name="ban", pass_context = True)
+    @commands.command(name="ban", pass_context=True)
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx, member: discord.Member, *, reason=None):
 
         await ctx.guild.ban(member)
-        if reason != None:
+        if reason is not None:
             await ctx.send(f'User {member.mention} has been banned for {reason}')
             return
 
@@ -54,7 +57,7 @@ class ModerationCommands(commands.Cog):
 
         await member.add_roles(mute_role)
 
-        if reason != None:
+        if reason is not None:
             await ctx.send(f'{member} has been muted for {reason}')
             return
 
@@ -65,7 +68,7 @@ class ModerationCommands(commands.Cog):
 
     @commands.command(name="unmute", pass_context=True)
     @commands.has_permissions(manage_messages=True, manage_roles=True)
-    async def unmute(self, ctx, member: discord.Member, *, reason=None):
+    async def unmute(self, ctx, member: discord.Member):
 
         mute_role_name = mute_role_dict[str(ctx.guild.id)]
 
@@ -78,7 +81,7 @@ class ModerationCommands(commands.Cog):
 
 ############-MUTEROLE COMMAND-#################################################################################
 
-    @commands.command(name='muterole')
+    @commands.command(name="muterole")
     @commands.has_permissions(manage_roles=True)
     async def muterole(self, ctx, role: discord.Role):
 
@@ -91,47 +94,71 @@ class ModerationCommands(commands.Cog):
         await ctx.send(f'Set mute role to {role}.')
         return
 
-############-ANTISPAM-#########################################################################################
+############-PURGE COMMAND-####################################################################################
+
+    @commands.command(name="purge")
+    @commands.has_permissions(manage_messages=True)
+    async def purge(self, ctx, arg: int):
+        await ctx.channel.purge(limit=arg+1)
+
+        embed_to_send = discord.Embed(title=f'{arg} messages have been deleted.')
+        embed_to_send.set_footer(text=f'{ctx.message.author} used {config["prefix"]}purge')
+
+        await ctx.send(embed=embed_to_send, delete_after=7)
+
+############-ANTISPAM AND BLACKLIST-###########################################################################
 
     @commands.Cog.listener()
     async def on_message(self, message):
+
         author_id = str(message.author.id)
         words_in_message = message.content.split()
-        for word in config['word_blacklist']:
-            if word in words_in_message:
-                
+
+        #if author is an administrator
+        if message.author.guild_permissions.administrator is True:
+            return
+
+        #if message has a blacklisted word
+        for black_listed_word in config['word_blacklist']:
+            for word in words_in_message:
+                if word.startswith(black_listed_word) or word.endswith(black_listed_word):
+                    await message.delete()
+                    await message.channel.send(f'{message.author.mention} your message contains a blacklisted word, it has been deleted.')
+
         #if author has the manage messages permission
-        if message.author.guild_permissions.manage_messages == True:
+        if message.author.guild_permissions.manage_messages:
             return
         #if the author is a bot
-        if message.author.bot == True:
-            return 
+        if message.author.bot:
+            return
+
         #if the antispam feature is turned on
-        if config['spam_settings']['antispam'] == True:
+        if config['spam_settings']['antispam']:
             if author_id not in user_spam_count.keys():
-                #if the users id is not in the dictionary add it 
+                #if the user's id is not in the dictionary add it
                 user_spam_count[author_id] = [0, message.content]
 
             if user_spam_count[author_id][1] != message.content:
-                #if the message in the users spam count is not the same reset the counter
+                #if the message in the user's spam count is not the same reset the counter
                 user_spam_count[author_id] = [0, message.content]
-                
+
             if user_spam_count[author_id][0] == 0:
                 #if the spam count is 0 set it to 1
                 user_spam_count[author_id][0] = 1
-                
+
             elif user_spam_count[author_id][0] == config['spam_settings']['spam_count'] - 1:
-                #if the user has sent the same message the amount of times in a row 
+                #if the user has sent the same message the amount of times in a row
                 #that is defined by the config they will be muted
                 mute_role_name = mute_role_dict[author_id]
                 mute_role = discord.utils.get(message.guild.roles, name=mute_role_name)
-                
+
                 await message.author.add_roles(mute_role)
                 await message.channel.send(f"{message.author.mention} has been muted for spamming.")
                 user_spam_count[author_id][0] = 0
-                
-                
-            else: 
+
+            else:
                 #add to the counter
                 user_spam_count[author_id][0] += 1
-                
+
+            if len(user_spam_count) > 50:
+                user_spam_count.pop(50)

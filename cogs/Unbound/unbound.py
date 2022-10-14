@@ -16,12 +16,12 @@ class UnboundCommands(commands.Cog):
 
 ############-MOVES COMMAND-####################################################################################
 
-    @commands.command(name='moves')                                         #MOVES
+    @commands.command(name='moves')                                    #MOVES
     async def moves(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
         lvl_up_element = lvlupmoves_dict.get(args ,False)              #querying for the dictionary
 
-        if lvl_up_element == False:                                    #if no dictionary found, jump out of this
+        if lvl_up_element is False:                                    #if no dictionary found, jump out of this
             await ctx.send(constants.invalid_text)                     #error message
             return
         embedTitle = lvl_up_element['name'].title()                    #setting name
@@ -37,12 +37,12 @@ class UnboundCommands(commands.Cog):
 
 ############-EGGMOVES COMMAND-#################################################################################
 
-    @commands.command(name='eggmoves')                                      #EGGMOVES
+    @commands.command(name='eggmoves')                                 #EGGMOVES
     async def eggmoves(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
         egg_moves_element = eggmoves_dict.get(args, False)             #querying for the dictionary
 
-        if egg_moves_element == False:                                 #if no dictionary found, jump out of this
+        if egg_moves_element is False:                                 #if no dictionary found, jump out of this
             await ctx.send(constants.invalid_text)                     #error message
             return
         embedTitle = egg_moves_element['name'].title()                 #extracting the name of the pokemon
@@ -56,12 +56,12 @@ class UnboundCommands(commands.Cog):
 
 ############-ABILITY COMMAND-##################################################################################
 
-    @commands.command(name='ability')                                       #ABILITY
+    @commands.command(name='ability')                                  #ABILITY
     async def ability(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
         abilities_element = abilities_dict.get(args, False)
 
-        if abilities_element == False:                                 #if no dictionary found return and send error message
+        if abilities_element is False:                                 #if no dictionary found return and send error message
             await ctx.send(constants.invalid_text)                     #error
             return
 
@@ -89,7 +89,7 @@ class UnboundCommands(commands.Cog):
 
 ############-TMLOCATION COMMAND-###############################################################################
 
-    @commands.command(name='tmlocation', aliases=['tm'])                     #TMLOCATION
+    @commands.command(name='tmlocation', aliases=['tm'])                #TMLOCATION
     async def tmlocation(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
         q = args
@@ -100,7 +100,7 @@ class UnboundCommands(commands.Cog):
 
         tmlocation_element = tmlocation_dict.get(searchThis, False)     #querying using the name now
 
-        if tmlocation_element == False:                                 #if no dictionary found, jump out of this
+        if tmlocation_element is False:                                 #if no dictionary found, jump out of this
             await ctx.send(constants.invalid_text)                      #error message
             return
 
@@ -114,13 +114,13 @@ class UnboundCommands(commands.Cog):
 
 ############-Z COMMAND-########################################################################################
 
-    @commands.command(name='z')                                              #Z
+    @commands.command(name='z')                                         #Z
     async def z(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
         z_element = zlocation_dict.get(args, False)                     #query for z crystal
 
-        if z_element == False:                                          #does entry exist?
+        if z_element is False:                                          #does entry exist?
             await ctx.send(constants.invalid_text)                      #if not send error
             return
 
@@ -133,13 +133,13 @@ class UnboundCommands(commands.Cog):
 
 ############-MEGASTONE COMMAND-################################################################################
 
-    @commands.command(name='megastone')                                      #MEGASTONE
+    @commands.command(name='megastone')                                 #MEGASTONE
     async def megastone(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
         megastone_element = megastone_dict.get(args, False)             #query for megastone
 
-        if megastone_element == False:                                  #does entry exist?
+        if megastone_element is False:                                  #does entry exist?
             await ctx.send(constants.invalid_text)                      #if not send error
             return
 
@@ -152,12 +152,12 @@ class UnboundCommands(commands.Cog):
 
 ############-HELDITEM COMMAND-################################################################################
 
-    @commands.command(name='helditem')                                       #HELDITEM
+    @commands.command(name='helditem')                                  #HELDITEM
     async def helditem(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
         helditem_element = helditem_dict.get(args, False)
-        if helditem_element == False:                                   #is key not present, display error message and break out of it
+        if helditem_element is False:                                   #is key not present, display error message and break out of it
             await ctx.send(constants.invalid_text +
                            " What you are looking for might not be an item that can be obtained from wild pokemons")
             return
@@ -172,12 +172,12 @@ class UnboundCommands(commands.Cog):
 
 ############-LOCATION COMMAND-#################################################################################
 
-    @commands.command(name='location')                                       #LOCATION
+    @commands.command(name='location')                                 #LOCATION
     async def location(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
         pokelocation_element = pokelocation_dict.get(args, False)
-        if pokelocation_element == False:                               #is key not present, display error message and break out of it
+        if pokelocation_element is False:                               #is key not present, display error message and break out of it
             await ctx.send(constants.invalid_text)
             return
 
@@ -191,7 +191,7 @@ class UnboundCommands(commands.Cog):
 
 ############-DIFFICULTY COMMAND-###############################################################################
 
-    @commands.command(name='difficulty')                                     #DIFFICULTY
+    @commands.command(name='difficulty')                                #DIFFICULTY
     async def difficulty(self, ctx):
 
         embedToSend = discord.Embed(title= '**Which difficulty should I pick:**')
@@ -205,7 +205,7 @@ class UnboundCommands(commands.Cog):
 
 ############-SHINY COMMAND-####################################################################################
 
-    @commands.command(name='shiny', aliases=['shinyodd'])                    #SHINYODD & SHINY
+    @commands.command(name='shiny', aliases=['shinyodd'])               #SHINYODD & SHINY
     async def shiny(self, ctx):
         embedTitle = '**Shiny Odds:**'
         embedBody = constants.shiny_odd_text
@@ -218,7 +218,7 @@ class UnboundCommands(commands.Cog):
 
 ############-PICKUP COMMAND-###################################################################################
 
-    @commands.command(name='pickup')                                         #PICKUP
+    @commands.command(name='pickup')                                    #PICKUP
     async def pickup(self, ctx):
 
         embedToSend = discord.Embed(title=constants.pick_up_image_source[0]) #creates embed
@@ -228,7 +228,7 @@ class UnboundCommands(commands.Cog):
 
 ############-KBT COMMAND-######################################################################################
 
-    @commands.command(name='kbt')                                            #KBT
+    @commands.command(name='kbt')                                       #KBT
     async def kbt(self, ctx):
 
         embedToSend = discord.Embed(title=constants.kbt_image_source[0])#creates embed
@@ -238,7 +238,7 @@ class UnboundCommands(commands.Cog):
 
 ############-BREEDING COMMAND-#################################################################################
 
-    @commands.command(name='breeding')                                       #BREEDING
+    @commands.command(name='breeding')                                  #BREEDING
     async def breeding(self, ctx):
 
         embedToSend = discord.Embed(title= '**Extreme Hyperosmia Breeding Help:**')
@@ -252,7 +252,7 @@ class UnboundCommands(commands.Cog):
 
 ############-CAPS COMMAND-#####################################################################################
 
-    @commands.command(name='caps', aliases=['lvlcaps'])                      #CAPS & LVLCAPS
+    @commands.command(name='caps', aliases=['lvlcaps'])                 #CAPS & LVLCAPS
     async def caps(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
@@ -272,7 +272,7 @@ class UnboundCommands(commands.Cog):
 
 ############-DOWNLOAD COMMAND-#################################################################################
 
-    @commands.command(name='download')                                       #DOWNLOAD
+    @commands.command(name='download')                                  #DOWNLOAD
     async def download(self, ctx):
 
         embedToSend = discord.Embed(
@@ -284,10 +284,10 @@ class UnboundCommands(commands.Cog):
 
 ############-DOCS COMMAND-#####################################################################################
 
-    @commands.command(name='docs')                                           #DOCS
+    @commands.command(name='docs')                                      #DOCS
     async def docs(self, ctx):
 
-        embedTitle = '**Official Unbound Docs:**'                        #extracting the name of the pokemon
+        embedTitle = '**Official Unbound Docs:**'                       #extracting the name of the pokemon
         embedBody = "\n".join(
             x for x in
             constants.docs_text)                                        #concatenating the list items
@@ -300,13 +300,13 @@ class UnboundCommands(commands.Cog):
 
 ############-LEARNTM COMMAND-##################################################################################
 
-    @commands.command(name='learntm')                                        #LEARNTM
+    @commands.command(name='learntm')                                   #LEARNTM
     async def learntm(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
         tm_element = tm_and_tutor_dict.get(args ,False)                 #querying for the dictionary
 
-        if tm_element == False:                                         #if no dictionary found, jump out of this
+        if tm_element is False:                                         #if no dictionary found, jump out of this
             await ctx.send(constants.invalid_text)                      #error message
             return
         embedTitle = "TM's compatible with "
@@ -324,12 +324,12 @@ class UnboundCommands(commands.Cog):
 
 ############-TUTOR COMMAND-####################################################################################
 
-    @commands.command(name='tutor')                                          #TUTOR
+    @commands.command(name='tutor')                                     #TUTOR
     async def tutor(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
         tutor_element = tm_and_tutor_dict.get(args ,False)              #querying for the dictionary
-        if tutor_element == False:                                      #if no dictionary found, jump out of this
+        if tutor_element is False:                                      #if no dictionary found, jump out of this
             await ctx.send(constants.invalid_text)                      #error message
             return
         embedTitle = "Tutor moves learnt by "
@@ -347,12 +347,12 @@ class UnboundCommands(commands.Cog):
 
 ############-MOVEINFO COMMAND-#################################################################################
 
-    @commands.command(name='moveinfo')                                       #MOVEINFO
+    @commands.command(name='moveinfo')                                  #MOVEINFO
     async def moveinfo(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
         move_info_element = move_info_dict.get(args ,False)             #querying for the dictionary
-        if move_info_element == False:                                  #if no dictionary found, jump out of this
+        if move_info_element is False:                                  #if no dictionary found, jump out of this
             await ctx.send(constants.invalid_text)                      #error message
             return
         embedTitle = move_info_element['movename'].title()              #setting name
@@ -368,8 +368,8 @@ class UnboundCommands(commands.Cog):
 
 ############-STATS COMMAND-####################################################################################
 
-    @commands.command(name='stats')                                          #STATS AND SCALEMONS
-    async def stats(self, interaction: discord.interactions, *args ):
+    @commands.command(name='stats')                                     #STATS AND SCALEMONS
+    async def stats(self, interaction: discord.interactions, *args):
         scalemonFlag = False                                            #setting the scalemon flag to be false initially
 
         if len(args) != 0 and helperfunctions.normalizeString(args[0]) == 'scale':
@@ -381,8 +381,8 @@ class UnboundCommands(commands.Cog):
             args = helperfunctions.normalizeString(' '.join(args[0:]))
 
         base_stat_element = base_stats_dict.get(args, False)            #query dictionary
-        if base_stat_element == False:                                  #is key not present, display error message and break out of it
-            await interaction.send(content = constants.invalid_text)
+        if base_stat_element is False:                                  #is key not present, display error message and break out of it
+            await interaction.send(content=constants.invalid_text)
             return
 
         temp = base_stat_element['stats'].copy()
