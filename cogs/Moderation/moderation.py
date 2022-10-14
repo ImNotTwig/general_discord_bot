@@ -111,12 +111,12 @@ class ModerationCommands(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
 
-        author_id = str(message.author.id)
-        words_in_message = message.content.split()
-
         #if author is an administrator
         if message.author.guild_permissions.administrator is True:
             return
+        
+        author_id = str(message.author.id)
+        words_in_message = message.content.split()
 
         #if message has a blacklisted word
         for black_listed_word in config['word_blacklist']:
@@ -162,3 +162,5 @@ class ModerationCommands(commands.Cog):
 
             if len(user_spam_count) > 50:
                 user_spam_count.pop(50)
+
+###############################################################################################################

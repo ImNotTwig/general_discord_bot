@@ -7,6 +7,7 @@ import os
 from cogs.Unbound.unbound import UnboundCommands
 from cogs.Music.music import MusicCommands
 from cogs.Moderation.moderation import ModerationCommands
+from cogs.LevelSystem.levelsystem import LevelSystemCommands
 
 ###############################################################################################################
 
@@ -47,6 +48,7 @@ if __name__ == '__main__':
     asyncio.run(bot.add_cog(UnboundCommands(bot)))
     asyncio.run(bot.add_cog(MusicCommands(bot)))
     asyncio.run(bot.add_cog(ModerationCommands(bot)))
+    asyncio.run(bot.add_cog(LevelSystemCommands(bot)))
 
     if "tokens" in config.keys():
         bot.run(config['tokens']["discord_token"])
