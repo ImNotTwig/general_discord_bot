@@ -5,3 +5,4 @@ venv
 .config
 .upm
 .git
+__pycache__
