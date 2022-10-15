@@ -1,9 +1,11 @@
 {
-    "twig#3660": {
-        "level": 0,
-        "total_xp": 75,
-        "current_xp": 75,
-        "xp_needed": 25,
-        "can_gain_xp": true
+    "852658516987609148": {
+        "twig#3660": {
+            "level": 1,
+            "total_xp": 135,
+            "current_xp": 35,
+            "xp_needed": 165,
+            "can_gain_xp": false
+        }
     }
 }
