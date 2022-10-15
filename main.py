@@ -48,7 +48,8 @@ if __name__ == '__main__':
     asyncio.run(bot.add_cog(UnboundCommands(bot)))
     asyncio.run(bot.add_cog(MusicCommands(bot)))
     asyncio.run(bot.add_cog(ModerationCommands(bot)))
-    asyncio.run(bot.add_cog(LevelSystemCommands(bot)))
+    if config['level_system']['levels_on'] is True:
+        asyncio.run(bot.add_cog(LevelSystemCommands(bot)))
 
     if "tokens" in config.keys():
         bot.run(config['tokens']["discord_token"])

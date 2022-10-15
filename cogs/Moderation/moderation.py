@@ -104,10 +104,10 @@ class ModerationCommands(commands.Cog):
         embed_to_send = discord.Embed(title=f'{arg} messages have been deleted.')
         embed_to_send.set_footer(text=f'{ctx.message.author} used {config["prefix"]}purge')
 
-        await ctx.send(embed=embed_to_send, delete_after=7)
+        await ctx.send(embed=embed_to_send, delete_after=5)
 
 ############-ANTISPAM AND BLACKLIST-###########################################################################
-
+    
     @commands.Cog.listener()
     async def on_message(self, message):
 
