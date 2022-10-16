@@ -97,7 +97,7 @@ class LevelSystemCommands(commands.Cog):
         if server_enabler[str(message.guild.id)] is True:
 
             server = str(message.guild.id)
-            author_name = message.author.id
+            author = message.author.id
 
             # if author is a bot
             if message.author.bot is True:
@@ -106,35 +106,35 @@ class LevelSystemCommands(commands.Cog):
             # if the server isnt in the levels dict yet, add it
             if server not in levels.keys():    
                 levels[server] = {}
-            if author_name not in levels[server]:
+            if author not in levels[server]:
                 # create a new UserXp dataclass with level 0
-                levels[server][author_name] = {}
-                levels[server][author_name]['level'] = 0
-                levels[server][author_name]['total_xp'] = 0
-                levels[server][author_name]['current_xp'] = 0
-                levels[server][author_name]['xp_needed'] = 100
-                levels[server][author_name]['can_gain_xp'] = True
+                levels[server][author] = {}
+                levels[server][author]['level'] = 0
+                levels[server][author]['total_xp'] = 0
+                levels[server][author]['current_xp'] = 0
+                levels[server][author]['xp_needed'] = 100
+                levels[server][author]['can_gain_xp'] = True
 
                 with open('cogs/LevelSystem/levels.json', 'w') as file:
                     json.dump(levels, file, indent=4)
                           
             # if the author can gain xp
-            if levels[server][author_name]['can_gain_xp'] is True:
+            if levels[server][author]['can_gain_xp'] is True:
                 # increase authors total_xp and current_xp
-                levels[server][author_name]['current_xp'] += config['level_system']['xp_per_message']
-                levels[server][author_name]['total_xp'] += config['level_system']['xp_per_message']
+                levels[server][author]['current_xp'] += config['level_system']['xp_per_message']
+                levels[server][author]['total_xp'] += config['level_system']['xp_per_message']
             
                 # if the current_xp is over or equal to the xp_needed 
-                if levels[server][author_name]['current_xp'] >= levels[server][author_name]['xp_needed']:
+                if levels[server][author]['current_xp'] >= levels[server][author]['xp_needed']:
                     # calculate how much current_xp went over xp_needed if it did
-                    if levels[server][author_name]['current_xp'] > levels[server][author_name]['xp_needed']:
+                    if levels[server][author]['current_xp'] > levels[server][author]['xp_needed']:
                         #set the authors current_xp to the difference between it and the xp_needed
-                        levels[server][author_name]['current_xp'] = levels[server][author_name]['current_xp'] - levels[server][author_name]['xp_needed']
+                        levels[server][author]['current_xp'] = levels[server][author]['current_xp'] - levels[server][author]['xp_needed']
 
                     # increment the authors level by 1    
-                    levels[server][author_name]['level'] += 1
+                    levels[server][author]['level'] += 1
                     #setting the new xp_needed according to the formula defined at the top of this file
-                    levels[server][author_name]['xp_needed'] = 5 * (levels[server][author_name]['level'] ^ 2) + (50 * levels[server][author_name]['level']) + 100
+                    levels[server][author]['xp_needed'] = 5 * (levels[server][author]['level'] ^ 2) + (50 * levels[server][author]['level']) + 100
                 
                 # write the new xp amounts to levels.json
                 with open('cogs/LevelSystem/levels.json', 'w') as file:
@@ -144,9 +144,9 @@ class LevelSystemCommands(commands.Cog):
                 # can_gain_xp state changes it will never be false in the file
 
                 # don't let the author gain xp until the cooldown is over
-                levels[server][author_name]['can_gain_xp'] = False
+                levels[server][author]['can_gain_xp'] = False
                 await asyncio.sleep(config['level_system']['cooldown_in_seconds'])
-                levels[server][author_name]['can_gain_xp'] = True
+                levels[server][authoruthor_name]['can_gain_xp'] = True
         # if the server has the level system turned off
         else:
             return    
