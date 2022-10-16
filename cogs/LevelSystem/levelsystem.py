@@ -31,7 +31,7 @@ class LevelSystemCommands(commands.Cog):
     async def xp(self, ctx):
         # setting author name
         server = str(ctx.message.guild.id)
-        author = ctx.author.id
+        author = str(ctx.author.id)
         # if author is in the levels dict already
         if server in levels.keys():
             if author in levels[server]:
@@ -92,12 +92,15 @@ class LevelSystemCommands(commands.Cog):
             server_enabler[str(message.guild.id)] = False
             with open('cogs/LevelSystem/server_level_system_enabler.json', 'r+') as file:
                 json.dump(server_enabler, file, indent=4)
+
+        if message.content.startswith(str({config['prefix']})):
+            return
         
         # if the server has the level system turned on 
         if server_enabler[str(message.guild.id)] is True:
 
             server = str(message.guild.id)
-            author = message.author.id
+            author = str(message.author.id)
 
             # if author is a bot
             if message.author.bot is True:
@@ -123,7 +126,7 @@ class LevelSystemCommands(commands.Cog):
                 # increase authors total_xp and current_xp
                 levels[server][author]['current_xp'] += config['level_system']['xp_per_message']
                 levels[server][author]['total_xp'] += config['level_system']['xp_per_message']
-            
+                
                 # if the current_xp is over or equal to the xp_needed 
                 if levels[server][author]['current_xp'] >= levels[server][author]['xp_needed']:
                     # calculate how much current_xp went over xp_needed if it did
@@ -146,10 +149,32 @@ class LevelSystemCommands(commands.Cog):
                 # don't let the author gain xp until the cooldown is over
                 levels[server][author]['can_gain_xp'] = False
                 await asyncio.sleep(config['level_system']['cooldown_in_seconds'])
-                levels[server][authoruthor_name]['can_gain_xp'] = True
+                levels[server][author]['can_gain_xp'] = True
         # if the server has the level system turned off
         else:
             return    
             
-###############################################################################################################
+############-Leaderboard-######################################################################################
 
+    @commands.command(name="leaderboard")
+    async def leaderboard(self, ctx):
+        server = str(ctx.message.guild.id)
+        var = dict()
+        server_dict = levels[server]
+        rankings = {key: value for key, value in sorted(server_dict.items(), key=lambda dict_item: -dict_item[1]['total_xp'])}
+        
+        i = 1
+        embed = discord.Embed(title=f"Rankings for {ctx.guild.name}")
+        for x in rankings:
+            try:
+                temp = ctx.guild.get_member(int(x))
+                tempxp = levels[server][x]["total_xp"]
+                templevel = levels[server][x]["level"]
+                embed.add_field(name=f"{i}: {temp.name}", value=f"""Level: {templevel}
+Total Xp: {tempxp}""", inline=False)
+                i += 1
+            except Exception:
+                pass
+            if i == 11:
+                break
+        await ctx.channel.send(embed=embed)
