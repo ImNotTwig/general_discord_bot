@@ -115,7 +115,7 @@ class LevelSystemCommands(commands.Cog):
                 levels[server][author_name]['xp_needed'] = 100
                 levels[server][author_name]['can_gain_xp'] = True
 
-                with open('cogs/LevelSystem/levels.json', 'r+') as file:
+                with open('cogs/LevelSystem/levels.json', 'w') as file:
                     json.dump(levels, file, indent=4)
                           
             # if the author can gain xp
@@ -137,7 +137,7 @@ class LevelSystemCommands(commands.Cog):
                     levels[server][author_name]['xp_needed'] = 5 * (levels[server][author_name]['level'] ^ 2) + (50 * levels[server][author_name]['level']) + 100
                 
                 # write the new xp amounts to levels.json
-                with open('cogs/LevelSystem/levels.json', 'r+') as file:
+                with open('cogs/LevelSystem/levels.json', 'w') as file:
                     json.dump(levels, file, indent=4)
 
                 # because the file gets written before the

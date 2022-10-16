@@ -11,12 +11,19 @@
     "722092863994855534": {
         "audrey <3#8039": {
             "level": 0,
-            "total_xp": 30,
-            "current_xp": 30,
+            "total_xp": 75,
+            "current_xp": 75,
+            "xp_needed": 100,
+            "can_gain_xp": false
+        },
+        "Penturos#1282": {
+            "level": 0,
+            "total_xp": 45,
+            "current_xp": 45,
             "xp_needed": 100,
             "can_gain_xp": true
         },
-        "Penturos#1282": {
+        "twig#3660": {
             "level": 0,
             "total_xp": 15,
             "current_xp": 15,
@@ -24,4 +31,4 @@
             "can_gain_xp": true
         }
     }
-}
+}}
