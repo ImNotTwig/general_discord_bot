@@ -36,10 +36,13 @@ class LevelSystemCommands(commands.Cog):
         if server in levels.keys():
             if author in levels[server]:
                 # sending the embed
-
+                # title
                 embed = discord.Embed(title=f"{ctx.author.name}'s level stats")
+                # Name of the user
                 embed.add_field(name="Name", value=ctx.author.mention, inline=True)
+                # current_xp that the user has until next level up
                 embed.add_field(name="Xp", value=levels[server][author]['current_xp'], inline=True)
+                # current level of the user
                 embed.add_field(name="Level", value=levels[server][author]['level'], inline=True)
                 
                 current_xp = levels[server][author]['current_xp']
@@ -49,7 +52,8 @@ class LevelSystemCommands(commands.Cog):
                 amount_per_box = xp_needed / 20                
                 current_boxes = current_xp / amount_per_box
                 boxes_left = xp_needed_to_lvl_up / amount_per_box
-
+                # there should be 20 boxes when the embed is sent
+                # a percentage of white and blue squares should correspond to the current_xp and total_xp - current_xp
                 embed.add_field(name="Progress Bar [level]", value=(int(current_boxes)) * ":blue_square:" + (int(boxes_left)) * ":white_large_square:", inline=False)
                 embed.set_thumbnail(url=ctx.author.avatar.url)
                 
@@ -110,7 +114,7 @@ class LevelSystemCommands(commands.Cog):
             if server not in levels.keys():    
                 levels[server] = {}
             if author not in levels[server]:
-                # create a new UserXp dataclass with level 0
+                # create a new entry in the json with default level 0 values
                 levels[server][author] = {}
                 levels[server][author]['level'] = 0
                 levels[server][author]['total_xp'] = 0
@@ -161,9 +165,11 @@ class LevelSystemCommands(commands.Cog):
         server = str(ctx.message.guild.id)
         var = dict()
         server_dict = levels[server]
+        # sorting the users in the levels dict by total xp 
         rankings = {key: value for key, value in sorted(server_dict.items(), key=lambda dict_item: -dict_item[1]['total_xp'])}
         
-        i = 1
+        # adding the fields for the first 10 people in the rankings dict
+        i = 0
         embed = discord.Embed(title=f"Rankings for {ctx.guild.name}")
         for x in rankings:
             try:
@@ -175,6 +181,8 @@ Total Xp: {tempxp}""", inline=False)
                 i += 1
             except Exception:
                 pass
-            if i == 11:
+            #when the amount of users added is 10 break
+            if i == 10:
                 break
+        # sending the embed
         await ctx.channel.send(embed=embed)
