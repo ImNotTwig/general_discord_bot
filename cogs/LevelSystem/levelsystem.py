@@ -31,13 +31,13 @@ class LevelSystemCommands(commands.Cog):
     async def xp(self, ctx):
         # setting author name
         server = str(ctx.message.guild.id)
-        author = ctx.message.author.name + '#' + ctx.message.author.discriminator
+        author = ctx.author.name + '#' + ctx.author.discriminator
         # if author is in the levels dict already
         if server in levels.keys():
             if author in levels[server]:
                 # sending the embed
 
-                embed = discord.Embed(title=f"{ctx.message.author.name}'s level stats")
+                embed = discord.Embed(title=f"{ctx.author.name}'s level stats")
                 embed.add_field(name="Name", value=ctx.author.mention, inline=True)
                 embed.add_field(name="Xp", value=levels[server][author]['current_xp'], inline=True)
                 embed.add_field(name="Level", value=levels[server][author]['level'], inline=True)
@@ -51,7 +51,7 @@ class LevelSystemCommands(commands.Cog):
                 boxes_left = xp_needed_to_lvl_up / amount_per_box
 
                 embed.add_field(name="Progress Bar [level]", value=(int(current_boxes)) * ":blue_square:" + (int(boxes_left)) * ":white_large_square:", inline=False)
-                embed.set_thumbnail(url=ctx.message.author.avatar.url)
+                embed.set_thumbnail(url=ctx.author.avatar.url)
                 
                 await ctx.send(embed=embed)
         # if the author is *not* in the levels dict already
@@ -65,7 +65,7 @@ class LevelSystemCommands(commands.Cog):
             levels[server][author]['can_gain_xp'] = True
             # sending the embed
             
-            embed = discord.Embed(title=f"{ctx.message.author.name}'s level stats")
+            embed = discord.Embed(title=f"{ctx.author.name}'s level stats")
             embed.add_field(name="Name", value=ctx.author.mention, inline=True)
             embed.add_field(name="Xp", value=levels[server][author]['current_xp'], inline=True)
             embed.add_field(name="Level", value=levels[server][author]['level'], inline=True)
@@ -79,12 +79,8 @@ class LevelSystemCommands(commands.Cog):
             boxes_left = xp_needed_to_lvl_up / amount_per_box
                             
             embed.add_field(name="Progress Bar [level]", value=(int(current_boxes)) * ":blue_square:" + (int(boxes_left)) * ":white_large_square:", inline=False)
-            embed.set_thumbnail(url=ctx.message.author.avatar.url)
+            embed.set_thumbnail(url=ctx.author.avatar.url)
             await ctx.send(embed=embed)
-                        
-            # writing the new dictionary to the levels.json file
-            with open('cogs/LevelSystem/levels.json', 'r+') as file:
-                json.dump(levels, file, indent=4)
 
 ############-DETECT MESSAGE FOR XP-############################################################################
 
