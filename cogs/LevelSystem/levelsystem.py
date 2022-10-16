@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
 import json
-from dataclasses import dataclass
-from dataclasses_serialization.json import JSONSerializer
 import asyncio
 
 with open('config.json', 'r+') as file:
@@ -12,21 +10,14 @@ with open('cogs/LevelSystem/levels.json', 'r+') as file:
 with open('cogs/LevelSystem/server_level_system_enabler.json', 'r+') as file:
     server_enabler = json.load(file)
 
-@dataclass
-class UserXp:
-    level: int
-    total_xp: int
-    current_xp: int
-    xp_needed: int
-    can_gain_xp: bool
-    
-    def __getitem__(self, key):
-        return super().__getattribute__(key)
-
+# since sometimes members data will have false it will be written to file
+# this sets it to true when it loads the file so users can gain xp
+for server in levels:
+    for member in levels[server]:
+        levels[server][member]['can_gain_xp'] = True
 
 # xp_needed formula is:
 # 5*(level^2) + (50*level) + 100 - current_xp
-# when xp_needed reaches 0 increase level by 1 and calculate new xp_needed
 
 ############-LEVELSYSTEM COMMANDS-#############################################################################
 
@@ -45,24 +36,55 @@ class LevelSystemCommands(commands.Cog):
         if server in levels.keys():
             if author in levels[server]:
                 # sending the embed
-                embed_to_send = discord.Embed(
-                    description=f'{author} is level {levels[server][author]["level"]}'
-                )
-                await ctx.send(embed=embed_to_send)
+
+                embed = discord.Embed(title=f"{ctx.message.author.name}'s level stats")
+                embed.add_field(name="Name", value=ctx.author.mention, inline=True)
+                embed.add_field(name="Xp", value=levels[server][author]['current_xp'], inline=True)
+                embed.add_field(name="Level", value=levels[server][author]['level'], inline=True)
+                
+                current_xp = levels[server][author]['current_xp']
+                xp_needed = levels[server][author]['xp_needed']
+                xp_needed_to_lvl_up = xp_needed - current_xp
+                
+                amount_per_box = xp_needed / 20                
+                current_boxes = current_xp / amount_per_box
+                boxes_left = xp_needed_to_lvl_up / amount_per_box
+
+                embed.add_field(name="Progress Bar [level]", value=(int(current_boxes)) * ":blue_square:" + (int(boxes_left)) * ":white_large_square:", inline=False)
+                embed.set_thumbnail(url=ctx.message.author.avatar.url)
+                
+                await ctx.send(embed=embed)
         # if the author is *not* in the levels dict already
         else:
             levels[server] = {}
-            # create a new UserXp dataclass with level 0
-            levels[server][author] = UserXp(0, 0, 0, 100, True)
-            # sending the embed_to_send
-            embed_to_send = discord.Embed(
-                description=f'{author} is level {levels[server][author]["level"]}'
-            )
-            await ctx.send(embed=embed_to_send)
+            # create new user data
+            levels[server][author]['level'] = 0
+            levels[server][author]['total_xp'] = 0
+            levels[server][author]['current_xp'] = 0
+            levels[server][author]['xp_needed'] = 100
+            levels[server][author]['can_gain_xp'] = True
+            # sending the embed
+            
+            embed = discord.Embed(title=f"{ctx.message.author.name}'s level stats")
+            embed.add_field(name="Name", value=ctx.author.mention, inline=True)
+            embed.add_field(name="Xp", value=levels[server][author]['current_xp'], inline=True)
+            embed.add_field(name="Level", value=levels[server][author]['level'], inline=True)
+            
+            current_xp = levels[server][author]['current_xp']
+            xp_needed = levels[server][author]['xp_needed']
+            xp_needed_to_lvl_up = xp_needed - current_xp
 
-        # writing the new dictionary to the levels.json file
-        with open('cogs/LevelSystem/levels.json', 'r+') as file:
-            json.dump(JSONSerializer.serialize(levels), file, indent=4)
+            amount_per_box = xp_needed / 20
+            current_boxes = current_xp / amount_per_box
+            boxes_left = xp_needed_to_lvl_up / amount_per_box
+                            
+            embed.add_field(name="Progress Bar [level]", value=(int(current_boxes)) * ":blue_square:" + (int(boxes_left)) * ":white_large_square:", inline=False)
+            embed.set_thumbnail(url=ctx.message.author.avatar.url)
+            await ctx.send(embed=embed)
+                        
+            # writing the new dictionary to the levels.json file
+            with open('cogs/LevelSystem/levels.json', 'r+') as file:
+                json.dump(levels, file, indent=4)
 
 ############-DETECT MESSAGE FOR XP-############################################################################
 
@@ -88,7 +110,11 @@ class LevelSystemCommands(commands.Cog):
             if server not in levels.keys():    
                 levels[server] = {}
                 # create a new UserXp dataclass with level 0
-                levels[server][author] = UserXp(0, 0, 0, 100, True)
+                levels[server][author_name]['level'] = 0
+                levels[server][author_name]['total_xp'] = 0
+                levels[server][author_name]['current_xp'] = 0
+                levels[server][author_name]['xp_needed'] = 100
+                levels[server][author_name]['can_gain_xp'] = True
                           
             # if the author can gain xp
             if levels[server][author_name]['can_gain_xp'] is True:
@@ -110,7 +136,7 @@ class LevelSystemCommands(commands.Cog):
                 
                 # write the new xp amounts to levels.json
                 with open('cogs/LevelSystem/levels.json', 'r+') as file:
-                    json.dump(JSONSerializer.serialize(levels), file, indent=4)
+                    json.dump(levels, file, indent=4)
 
                 # because the file gets written before the
                 # can_gain_xp state changes it will never be false in the file
@@ -122,3 +148,6 @@ class LevelSystemCommands(commands.Cog):
         # if the server has the level system turned off
         else:
             return    
+            
+###############################################################################################################
+
