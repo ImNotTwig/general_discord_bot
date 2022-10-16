@@ -31,7 +31,7 @@ class LevelSystemCommands(commands.Cog):
     async def xp(self, ctx):
         # setting author name
         server = str(ctx.message.guild.id)
-        author = ctx.author.name + '#' + ctx.author.discriminator
+        author = ctx.author.id
         # if author is in the levels dict already
         if server in levels.keys():
             if author in levels[server]:
@@ -97,7 +97,7 @@ class LevelSystemCommands(commands.Cog):
         if server_enabler[str(message.guild.id)] is True:
 
             server = str(message.guild.id)
-            author_name = message.author.name + '#' + message.author.discriminator
+            author_name = message.author.id
 
             # if author is a bot
             if message.author.bot is True:
