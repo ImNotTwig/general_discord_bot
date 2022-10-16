@@ -106,6 +106,7 @@ class LevelSystemCommands(commands.Cog):
             # if the server isnt in the levels dict yet, add it
             if server not in levels.keys():    
                 levels[server] = {}
+            if author_name not in levels[server]:
                 # create a new UserXp dataclass with level 0
                 levels[server][author_name] = {}
                 levels[server][author_name]['level'] = 0
@@ -113,6 +114,9 @@ class LevelSystemCommands(commands.Cog):
                 levels[server][author_name]['current_xp'] = 0
                 levels[server][author_name]['xp_needed'] = 100
                 levels[server][author_name]['can_gain_xp'] = True
+
+                with open('cogs/LevelSystem/levels.json', 'r+') as file:
+                    json.dump(levels, file, indent=4)
                           
             # if the author can gain xp
             if levels[server][author_name]['can_gain_xp'] is True:
