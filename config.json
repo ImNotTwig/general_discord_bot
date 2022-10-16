@@ -1,7 +1,7 @@
 {
     "tokens": {
         "discord_token": "",
-        "genius_token: ""
+        "genius_token": ""
     },
     
     "prefix": "",
@@ -11,7 +11,7 @@
         "spam_count": 5
     },
   
-    "word_blacklist" = [],
+    "word_blacklist": [],
     
     "level_system": {
         "levels_on": true,
