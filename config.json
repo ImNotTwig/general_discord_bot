@@ -1,0 +1,21 @@
+{
+    "tokens": {
+        "discord_token": "",
+        "genius_token: ""
+    },
+    
+    "prefix": "",
+  
+    "spam_settings": {
+        "antispam": true,
+        "spam_count": 5
+    },
+  
+    "word_blacklist" = [],
+    
+    "level_system": {
+        "levels_on": true,
+        "xp_per_message": 15,
+        "cooldown_in_seconds": 60
+    }
+}
