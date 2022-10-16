@@ -58,6 +58,7 @@ class LevelSystemCommands(commands.Cog):
         else:
             levels[server] = {}
             # create new user data
+            levels[server][author] = {}
             levels[server][author]['level'] = 0
             levels[server][author]['total_xp'] = 0
             levels[server][author]['current_xp'] = 0
@@ -106,6 +107,7 @@ class LevelSystemCommands(commands.Cog):
             if server not in levels.keys():    
                 levels[server] = {}
                 # create a new UserXp dataclass with level 0
+                levels[server][author_name] = {}
                 levels[server][author_name]['level'] = 0
                 levels[server][author_name]['total_xp'] = 0
                 levels[server][author_name]['current_xp'] = 0
