@@ -1,6 +1,7 @@
 .idea
 discord_bot.iml
 config.json
+example_config.json
 venv
 .config
 .upm
