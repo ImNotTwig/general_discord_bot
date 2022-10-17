@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 import asyncio
+import random
 
 with open('config.json', 'r+') as file:
     config = json.load(file)
@@ -128,8 +129,8 @@ class LevelSystemCommands(commands.Cog):
             # if the author can gain xp
             if levels[server][author]['can_gain_xp'] is True:
                 # increase authors total_xp and current_xp
-                levels[server][author]['current_xp'] += config['level_system']['xp_per_message']
-                levels[server][author]['total_xp'] += config['level_system']['xp_per_message']
+                levels[server][author]['current_xp'] += random.randint(config['level_system']['xp_per_message'][0], config['level_system']['xp_per_message'][1])
+                levels[server][author]['total_xp'] += random.randint(config['level_system']['xp_per_message'][0], config['level_system']['xp_per_message'][1])
                 
                 # if the current_xp is over or equal to the xp_needed 
                 if levels[server][author]['current_xp'] >= levels[server][author]['xp_needed']:
@@ -158,7 +159,7 @@ class LevelSystemCommands(commands.Cog):
         else:
             return    
             
-############-Leaderboard-######################################################################################
+############-LEADERBOARD COMMAND-##############################################################################
 
     @commands.command(name="leaderboard")
     async def leaderboard(self, ctx):
@@ -186,3 +187,20 @@ Total Xp: {tempxp}""", inline=False)
                 break
         # sending the embed
         await ctx.channel.send(embed=embed)
+        
+############-LEVELSWITCH COMMAND-##############################################################################
+        
+    @commands.command(name="levelswitch")
+    @commands.has_permissions(manage_messages=True)
+    async def levelswitch(self, ctx, arg):
+        server = str(ctx.guild.id)
+        if arg.lower() == "on":
+            server_enabler[server] = True
+            await ctx.channel.send(f"Switched the level system on for {ctx.guild.name}")
+        if arg.lower() == "off":
+            server_enabler[server] = False
+            await ctx.channel.send(f"Switched the level system off for {ctx.guild.name}")
+
+        with open('cogs/LevelSystem/server_level_system_enabler.json', 'w') as file:
+            json.dump(server_enabler, file, indent=4)    
+            
