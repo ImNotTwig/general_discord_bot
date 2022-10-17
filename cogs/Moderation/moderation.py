@@ -96,7 +96,7 @@ class ModerationCommands(commands.Cog):
 
 ############-PURGE COMMAND-####################################################################################
 
-    @commands.command(name="purge")
+    @commands.command(name="purge", aliases=["clear"])
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx, arg: int):
         await ctx.channel.purge(limit=arg+1)

@@ -1,4 +1,5 @@
 import discord
+from discord import Member
 from discord.ext import commands
 import json
 import asyncio
@@ -136,8 +137,11 @@ class LevelSystemCommands(commands.Cog):
                 if levels[server][author]['current_xp'] >= levels[server][author]['xp_needed']:
                     # calculate how much current_xp went over xp_needed if it did
                     if levels[server][author]['current_xp'] > levels[server][author]['xp_needed']:
-                        #set the authors current_xp to the difference between it and the xp_needed
+                        # set the authors current_xp to the difference between it and the xp_needed
                         levels[server][author]['current_xp'] = levels[server][author]['current_xp'] - levels[server][author]['xp_needed']
+                    # if the current_xp is equal to xp_needed
+                    else:
+                        levels[server][author]['current_xp'] = 0
 
                     # increment the authors level by 1    
                     levels[server][author]['level'] += 1
@@ -203,4 +207,37 @@ Total Xp: {tempxp}""", inline=False)
 
         with open('cogs/LevelSystem/server_level_system_enabler.json', 'w') as file:
             json.dump(server_enabler, file, indent=4)    
+
+############-GIVEXP COMMAND-###################################################################################
+
+    @commands.command(name="givexp")
+    @commands.has_permissions(manage_message=True)
+    async def givexp(self, ctx, member: discord.Member, arg):
+        try:
+            amount_of_xp = int(arg)
+        except ValueError:
+            await ctx.channel.send("You did not supply a valid integer amount!")
+        server = str(ctx.server.id)
+        author = str(member.id)
+        levels[server][member]['current_xp'] += amount_of_xp
+        # while the author's current_xp is greater or equal to xp_needed for level up
+        while levels[server][author]['current_xp'] >= levels[server][author]['xp_needed']:
+            # calculate how much current_xp went over xp_needed if it did
+            if levels[server][author]['current_xp'] > levels[server][author]['xp_needed']:
+                # set the author's current_xp to the difference between it and the xp_needed
+                levels[server][author]['current_xp'] = levels[server][author]['current_xp'] - levels[server][author]['xp_needed']
+            # if the author's current_xp is equal to xp_needed 
+            else:
+                levels[server][author]['current_xp'] = 0
+                
+            # increment the authors level by 1    
+            levels[server][author]['level'] += 1
+            #setting the new xp_needed according to the formula defined at the top of this file
+            levels[server][author]['xp_needed'] = 5 * (levels[server][author]['level'] ^ 2) + (50 * levels[server][author]['level']) + 100
+
+            # write the new xp amounts to levels.json
+            with open('cogs/LevelSystem/levels.json', 'w') as file:
+                json.dump(levels, file, indent=4)
+                
+            await ctx.channel.send(f"{ctx.author.name} has given {member.name} {arg} xp.")
             
