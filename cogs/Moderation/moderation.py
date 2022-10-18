@@ -56,37 +56,45 @@ class ModerationCommands(commands.Cog):
         reason = None
         time_units = None
         time_frame = None
+        number_list = []
+        word_list = []
         
         if args != []:
+            args_list = list(args[0])
+            for char in args_list:
+                if char.isnumeric():
+                    number_list.append(char)
+                else:
+                    word_list.append(char)
             # find which time frame its in
-            match args[0][-1]:
-                case 'second' | 'sec' | 'seconds' | 'secs' | 's':
-                    time_units = args[0][0]
+            match ''.join(word_list):
+                case 'second' | 'sec' | 'seconds' | 'secs':
+                    time_units = ''.join(number_list)
                     multiplier = 1
                     time_frame = "seconds"
                     
-                case 'minute' | 'min' | 'minutes' | 'mins' | 'm':
-                    time_units = args[0][0]
+                case 'minute' | 'min' | 'minutes' | 'mins':
+                    time_units = ''.join(number_list)
                     multiplier = 60
                     time_frame = "minutes"
                     
-                case 'hour' | 'hours' | 'h':
-                    time_units = args[0][0]
+                case 'hour' | 'hours':
+                    time_units = ''.join(number_list)
                     multiplier = 60 * 60
                     time_frame = "hours"
                     
-                case 'day' | 'days' | 'd':
-                    time_units = args[0][0]
+                case 'day' | 'days':
+                    time_units = ''.join(number_list)
                     multiplier = 60 * 60 * 24
                     time_frame = "days"
                     
                 case 'month' | 'months':
-                    time_units = args[0][0]
+                    time_units = ''.join(number_list)
                     multiplier = 60 * 60 * 24 * 30
                     time_frame = "months"
                     
-                case 'year' | 'years' | 'y':
-                    time_units = args[0][0]
+                case 'year' | 'years':
+                    time_units = ''.join(number_list)
                     multiplier = 60 * 60 * 24 * 30 * 12
                     time_frame = "years"
                 # assume its a reason and not a time
@@ -103,7 +111,10 @@ class ModerationCommands(commands.Cog):
                 reason = args[0:]
         else:
             no_time_with_reason = True
-                
+        
+        with open('cogs/Moderation/mute_roles.json', 'r+') as mute_role_file:
+            mute_role_dict = json.load(mute_role_file)
+        
         mute_role_name = mute_role_dict[str(ctx.guild.id)]
         mute_role = discord.utils.get(ctx.guild.roles, name=mute_role_name)
         await member.add_roles(mute_role)

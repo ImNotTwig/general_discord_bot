@@ -248,8 +248,8 @@ Total Xp: {tempxp}""", inline=False)
         try:
             amount_of_xp = int(arg)
         except ValueError:
-            await ctx.channel.send("You did not supply a valid integer amount!"
-                                   )
+            await ctx.channel.send("You did not supply a valid integer amount!")
+
         server = str(ctx.guild.id)
         author = str(member.id)
         levels[server][author]['current_xp'] += amount_of_xp
