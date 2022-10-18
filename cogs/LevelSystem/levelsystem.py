@@ -151,14 +151,11 @@ class LevelSystemCommands(commands.Cog):
             # if the author can gain xp
             if levels[server][author]['can_gain_xp'] is True:
                 # increase authors total_xp and current_xp
-                levels[server][author]['current_xp'] += random.randint(
+                xp_gained = random.randint(
                     config['level_system']['xp_per_message'][0],
                     config['level_system']['xp_per_message'][1])
-                
-                levels[server][author]['total_xp'] += random.randint(
-                    config['level_system']['xp_per_message'][0],
-                    config['level_system']['xp_per_message'][1])
-
+                levels[server][author]['current_xp'] += xp_gained                
+                levels[server][author]['total_xp'] += xp_gained
                 # if the current_xp is over or equal to the xp_needed
                 if levels[server][author]['current_xp'] >= levels[server][author]['xp_needed']:
                     # calculate how much current_xp went over xp_needed if it did
