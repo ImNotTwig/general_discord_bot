@@ -66,8 +66,9 @@ class ModerationCommands(commands.Cog):
                     number_list.append(char)
                 else:
                     word_list.append(char)
+                word_list = ''.join(word_list)
             # find which time frame its in
-            match ''.join(word_list):
+            match word_list:
                 case 'second' | 'sec' | 'seconds' | 'secs':
                     time_units = ''.join(number_list)
                     multiplier = 1

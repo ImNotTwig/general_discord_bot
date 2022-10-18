@@ -20,14 +20,27 @@ for server in levels:
 # xp_needed formula is:
 # 5*(level^2) + (50*level) + 100 - current_xp
 
+def recalc_global_levels():
+    for member in levels['global']:
+        levels['global'][member]['level'] = 0
+        levels['global'][member]['xp'] = 0
+    for server in levels:
+        if server == "global": 
+            continue
+        for member in levels[server]:
+            for field in levels['global'][member]:
+                levels['global'][member][field] += levels[server][member][field]
+recalc_global_levels()
+
 def new_member(server, author):
     levels[server][author] = {}
+    levels['global'][author]['level'] = 0
+    levels['global'][author]['xp'] = 0
     levels[server][author]['level'] = 0
     levels[server][author]['total_xp'] = 0
     levels[server][author]['current_xp'] = 0
     levels[server][author]['xp_needed'] = 100
     levels[server][author]['can_gain_xp'] = True
-
 
 ############-LEVELSYSTEM COMMANDS-#############################################################################
 
@@ -263,6 +276,7 @@ Total Xp: {tempxp}""", inline=False)
 
             # increment the authors level by 1
             levels[server][author]['level'] += 1
+            levels["global"][author]['level'] += 1
             # setting the new xp_needed according to the formula defined at the top of this file
             levels[server][author]['xp_needed'] = 5 * (levels[server][author]['level'] ^ 2) + (50 * levels[server][author]['level']) + 100
 
