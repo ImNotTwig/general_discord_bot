@@ -1,19 +1,19 @@
-{ pkgs }: {
-  deps = [
-    pkgs.python310
-      pkgs.pip3
+{ pkgs }: with pkgs; {
+  deps = with python310Packages; [
+    python-lsp-black
+    poetry
   ];
   env = {
-    PYTHON_LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+    PYTHON_LD_LIBRARY_PATH = lib.makeLibraryPath [
       # Needed for pandas / numpy
-      pkgs.stdenv.cc.cc.lib
-      pkgs.zlib
+      stdenv.cc.cc.lib
+      zlib
       # Needed for pygame
-      pkgs.glib
+      glib
       # Needed for matplotlib
-      pkgs.xorg.libX11
+      xorg.libX11
     ];
-    PYTHONBIN = "${pkgs.python310}/bin/python3.10";
+    PYTHONBIN = "${python310}/bin/python3.10";
     LANG = "en_US.UTF-8";
   };
 }

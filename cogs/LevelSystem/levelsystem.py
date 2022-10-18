@@ -4,6 +4,9 @@ import json
 import asyncio
 import random
 
+# xp_needed formula is:
+# 5*(level^2) + (50*level) + 100 - current_xp
+
 with open('config.json', 'r+') as file:
     config = json.load(file)
 with open('cogs/LevelSystem/levels.json', 'r+') as file:
@@ -15,27 +18,30 @@ with open('cogs/LevelSystem/server_level_system_enabler.json', 'r+') as file:
 # this sets it to true when it loads the file so users can gain xp
 for server in levels:
     for member in levels[server]:
-        levels[server][member]['can_gain_xp'] = True
-
-# xp_needed formula is:
-# 5*(level^2) + (50*level) + 100 - current_xp
-
-def recalc_global_levels():
-    for member in levels['global']:
-        levels['global'][member]['level'] = 0
-        levels['global'][member]['xp'] = 0
-    for server in levels:
-        if server == "global": 
+        if server == "global":
             continue
+        else:
+            levels[server][member]['can_gain_xp'] = True
+
+# calculate the global levels on startup
+for member in levels['global']:
+    levels['global'][member]['level'] = 0
+    levels['global'][member]['total_xp'] = 0
+for server in levels:
+    if server == "global": 
+        continue
+    else:
         for member in levels[server]:
             for field in levels['global'][member]:
                 levels['global'][member][field] += levels[server][member][field]
-recalc_global_levels()
+
+with open('cogs/LevelSystem/levels.json', 'w') as file:
+    json.dump(levels, file, indent=4)
 
 def new_member(server, author):
     levels[server][author] = {}
     levels['global'][author]['level'] = 0
-    levels['global'][author]['xp'] = 0
+    levels['global'][author]['total_xp'] = 0
     levels[server][author]['level'] = 0
     levels[server][author]['total_xp'] = 0
     levels[server][author]['current_xp'] = 0
@@ -61,16 +67,20 @@ class LevelSystemCommands(commands.Cog):
                 # sending the embed
                 # title
                 embed = discord.Embed(title=f"{ctx.author.name}'s level stats")
-                # Name of the user
-                embed.add_field(name="Name",
-                                value=ctx.author.mention,
+                # global xp that the user has until next level up
+                embed.add_field(name="Global Xp",
+                                value=levels["global"][author]['total_xp'],
+                                inline=True)
+                # global level of the user
+                embed.add_field(name="Global Level",
+                                value=levels["global"][author]['level'],
                                 inline=True)
                 # current_xp that the user has until next level up
-                embed.add_field(name="Xp",
+                embed.add_field(name=f"{ctx.guild.name} Xp",
                                 value=levels[server][author]['current_xp'],
                                 inline=True)
                 # current level of the user
-                embed.add_field(name="Level",
+                embed.add_field(name=f"{ctx.guild.name} Level",
                                 value=levels[server][author]['level'],
                                 inline=True)
 
@@ -83,7 +93,7 @@ class LevelSystemCommands(commands.Cog):
                 boxes_left = xp_needed_to_lvl_up / amount_per_box
                 # there should be 20 boxes when the embed is sent
                 # a percentage of white and blue squares should correspond to the current_xp and total_xp - current_xp
-                embed.add_field(name="Progress Bar [level]",
+                embed.add_field(name=f"Progress to leveling up in {ctx.guild.name}",
                                 value=(int(current_boxes)) * ":blue_square:" +
                                 (int(boxes_left)) * ":white_large_square:",
                                 inline=False)
@@ -167,6 +177,7 @@ class LevelSystemCommands(commands.Cog):
                 xp_gained = random.randint(
                     config['level_system']['xp_per_message'][0],
                     config['level_system']['xp_per_message'][1])
+                
                 levels[server][author]['current_xp'] += xp_gained                
                 levels[server][author]['total_xp'] += xp_gained
                 # if the current_xp is over or equal to the xp_needed
