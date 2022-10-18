@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 from collections import OrderedDict
+import asyncio
 
 with open('cogs/Moderation/mute_roles.json', 'r+') as mute_role_file:
     mute_role_dict = json.load(mute_role_file)
@@ -49,20 +50,85 @@ class ModerationCommands(commands.Cog):
 
     @commands.command(name="mute", pass_context=True)
     @commands.has_permissions(manage_messages=True, manage_roles=True)
-    async def mute(self, ctx, member: discord.Member, *, reason=None):
+    async def mute(self, ctx, member: discord.Member, *args):
+        args = list(args)
+        no_time_with_reason = False
+        reason = None
+        time_units = None
+        time_frame = None
+        
+        if args != []:
+            # find which time frame its in
+            match args[0][-1]:
+                case 'second' | 'sec' | 'seconds' | 'secs' | 's':
+                    time_units = args[0][0]
+                    multiplier = 1
+                    time_frame = "seconds"
+                    
+                case 'minute' | 'min' | 'minutes' | 'mins' | 'm':
+                    time_units = args[0][0]
+                    multiplier = 60
+                    time_frame = "minutes"
+                    
+                case 'hour' | 'hours' | 'h':
+                    time_units = args[0][0]
+                    multiplier = 60 * 60
+                    time_frame = "hours"
+                    
+                case 'day' | 'days' | 'd':
+                    time_units = args[0][0]
+                    multiplier = 60 * 60 * 24
+                    time_frame = "days"
+                    
+                case 'month' | 'months':
+                    time_units = args[0][0]
+                    multiplier = 60 * 60 * 24 * 30
+                    time_frame = "months"
+                    
+                case 'year' | 'years' | 'y':
+                    time_units = args[0][0]
+                    multiplier = 60 * 60 * 24 * 30 * 12
+                    time_frame = "years"
+                # assume its a reason and not a time
+                case _:
+                    no_time_with_reason = True
+                    
+            if no_time_with_reason is False:
+                # check if there is a reason provided
+                if args[1:] != []:
+                    reason = args[1:]
 
+            # if theres a reason without a time provided
+            if no_time_with_reason is True:                    
+                reason = args[0:]
+        else:
+            no_time_with_reason = True
+                
         mute_role_name = mute_role_dict[str(ctx.guild.id)]
-
         mute_role = discord.utils.get(ctx.guild.roles, name=mute_role_name)
-
         await member.add_roles(mute_role)
+        
+        if reason == []:
+            reason = None
 
         if reason is not None:
-            await ctx.send(f'{member} has been muted for {reason}')
-            return
+            if no_time_with_reason is True:
+                await ctx.send(f'{member} has been muted for {" ".join(reason)}.')
+            else:
+                await ctx.send(f'{member} has been muted for {" ".join(reason)} for {time_units} {time_frame}.')
+        else:
+            if no_time_with_reason is True:
+                await ctx.send(f'{member} has been muted.')
+            else:
+                await ctx.send(f'{member} has been muted for {time_units} {time_frame}.')
 
-        await ctx.send(f'{member} has been muted')
-        return
+        # wait for the amount provided if there was one
+        if args != []:
+            if no_time_with_reason is False:
+                print(f'{member} has been muted')
+                await asyncio.sleep(int(args[0][0]) * multiplier)
+                await member.remove_roles(mute_role)
+                print(f'{member} has been unmuted')
 
 ############-UNMUTE COMMAND-###################################################################################
 
@@ -88,7 +154,7 @@ class ModerationCommands(commands.Cog):
         if ctx.guild.id not in mute_role_dict.keys():
             mute_role_dict[ctx.guild.id] = str(role)
 
-        with open('cogs/Moderation/mute_roles.json', 'r+') as file:
+        with open('cogs/Moderation/mute_roles.json', 'w') as file:
             json.dump(mute_role_dict, file, indent=4)
 
         await ctx.send(f'Set mute role to {role}.')
@@ -99,10 +165,10 @@ class ModerationCommands(commands.Cog):
     @commands.command(name="purge", aliases=["clear"])
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx, arg: int):
-        await ctx.channel.purge(limit=arg+1)
+        await ctx.channel.purge(limit=arg + 1)
 
         embed_to_send = discord.Embed(title=f'{arg} messages have been deleted.')
-        embed_to_send.set_footer(text=f'{ctx.message.author} used {config["prefix"]}purge')
+        embed_to_send.set_footer(text=f'{ctx.message.author.mention} used {config["prefix"]}purge')
 
         await ctx.send(embed=embed_to_send, delete_after=5)
 
@@ -121,7 +187,7 @@ class ModerationCommands(commands.Cog):
         #if message has a blacklisted word
         for black_listed_word in config['word_blacklist']:
             for word in words_in_message:
-                if word.startswith(black_listed_word) or word.endswith(black_listed_word):
+                if word.startswith(black_listed_word) or word.endswith(black_listed_word) or word == black_listed_word:
                     await message.delete()
                     await message.channel.send(f'{message.author.mention} your message contains a blacklisted word, it has been deleted.')
 

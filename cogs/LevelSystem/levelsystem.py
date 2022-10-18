@@ -209,7 +209,7 @@ class LevelSystemCommands(commands.Cog):
                 tempxp = levels[server][x]["total_xp"]
                 templevel = levels[server][x]["level"]
                 
-                embed.add_field(name=f"{i}: {temp.name}", 
+                embed.add_field(name=f"{i+1}: {temp.name}", 
                                 value=f"""Level: {templevel}
 Total Xp: {tempxp}""", inline=False)
                 
@@ -243,16 +243,16 @@ Total Xp: {tempxp}""", inline=False)
 ############-GIVEXP COMMAND-###################################################################################
 
     @commands.command(name="givexp")
-    @commands.has_permissions(manage_message=True)
+    @commands.has_permissions(manage_messages=True)
     async def givexp(self, ctx, member: discord.Member, arg):
         try:
             amount_of_xp = int(arg)
         except ValueError:
             await ctx.channel.send("You did not supply a valid integer amount!"
                                    )
-        server = str(ctx.server.id)
+        server = str(ctx.guild.id)
         author = str(member.id)
-        levels[server][member]['current_xp'] += amount_of_xp
+        levels[server][author]['current_xp'] += amount_of_xp
         
         # while the author's current_xp is greater or equal to xp_needed for level up
         while levels[server][author]['current_xp'] >= levels[server][author]['xp_needed']:
@@ -274,3 +274,4 @@ Total Xp: {tempxp}""", inline=False)
             json.dump(levels, file, indent=4)
 
         await ctx.channel.send(f"{ctx.author.name} has given {member.name} {arg} xp.")
+        
