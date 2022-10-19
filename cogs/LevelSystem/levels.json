@@ -50,13 +50,8 @@
     "852658516987609148": {
         "389202953862512641": {
             "level": 7,
-<<<<<<< HEAD
-            "total_xp": 990,
-            "current_xp": 205,
-=======
             "total_xp": 992,
             "current_xp": 206,
->>>>>>> 7a87b35 (changed some things tbh I dont remember but it works)
             "xp_needed": 475,
             "can_gain_xp": true
         }
