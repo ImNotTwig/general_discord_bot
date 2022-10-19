@@ -119,18 +119,25 @@ class ModerationCommands(commands.Cog):
         mute_role_name = mute_role_dict[str(ctx.guild.id)]
         mute_role = discord.utils.get(ctx.guild.roles, name=mute_role_name)
         await member.add_roles(mute_role)
-        
+
+        # if reason is an empty list set it to None
         if reason == []:
             reason = None
 
+        # if there is a reason
         if reason is not None:
+            # if there is a reason but no time
             if no_time_with_reason is True:
                 await ctx.send(f'{member} has been muted for {" ".join(reason)}.')
+            # if there is a reason and a time
             else:
                 await ctx.send(f'{member} has been muted for {" ".join(reason)} for {time_units} {time_frame}.')
+        # if there is no reason
         else:
+            # if there is no time
             if no_time_with_reason is True:
                 await ctx.send(f'{member} has been muted.')
+            # if there is a time but no reason
             else:
                 await ctx.send(f'{member} has been muted for {time_units} {time_frame}.')
 

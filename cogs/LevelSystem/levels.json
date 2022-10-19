@@ -19,39 +19,44 @@
     },
     "722092863994855534": {
         "389202953862512641": {
-            "level": 5,
-            "total_xp": 1194,
-            "current_xp": 360,
-            "xp_needed": 385,
-            "can_gain_xp": true
-        },
-        "725836730846019644": {
-            "level": 5,
-            "total_xp": 1204,
-            "current_xp": 340,
-            "xp_needed": 385,
-            "can_gain_xp": true
-        },
-        "394622796698746880": {
             "level": 6,
-            "total_xp": 1535,
-            "current_xp": 315,
+            "total_xp": 1643,
+            "current_xp": 409,
             "xp_needed": 420,
             "can_gain_xp": true
         },
-        "415006070008709121": {
-            "level": 4,
-            "total_xp": 936,
-            "current_xp": 214,
-            "xp_needed": 330,
+        "725836730846019644": {
+            "level": 6,
+            "total_xp": 1562,
+            "current_xp": 325,
+            "xp_needed": 420,
             "can_gain_xp": true
+        },
+        "394622796698746880": {
+            "level": 7,
+            "total_xp": 1900,
+            "current_xp": 253,
+            "xp_needed": 475,
+            "can_gain_xp": true
+        },
+        "415006070008709121": {
+            "level": 5,
+            "total_xp": 1093,
+            "current_xp": 36,
+            "xp_needed": 385,
+            "can_gain_xp": false
         }
     },
     "852658516987609148": {
         "389202953862512641": {
             "level": 7,
+<<<<<<< HEAD
             "total_xp": 990,
             "current_xp": 205,
+=======
+            "total_xp": 992,
+            "current_xp": 206,
+>>>>>>> 7a87b35 (changed some things tbh I dont remember but it works)
             "xp_needed": 475,
             "can_gain_xp": true
         }
