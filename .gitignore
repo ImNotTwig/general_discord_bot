@@ -7,5 +7,3 @@ venv
 .upm
 .git
 __pycache__
-cogs/LevelSystem/levels.json
-cogs/LevelSystem/server_level_system_enabler.json
