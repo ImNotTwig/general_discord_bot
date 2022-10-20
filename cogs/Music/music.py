@@ -1,7 +1,10 @@
 import asyncio
 import discord
 import requests
+import yt_dlp
 import youtube_dl
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 from discord.ext import commands
 from lyricsgenius import Genius
 import json
@@ -16,11 +19,32 @@ FFMPEG_OPTIONS = {
 with open("config.json", 'r+', encoding="utf8") as file:
     config = json.load(file)
 
+spotify_id = False
+spotify_secret = False
+
 if "tokens" in config.keys():
     genius = Genius(access_token=config['tokens']['genius_token'], remove_section_headers=True)
+    
+    if "spotify_id" in config['tokens'].keys():
+        spotify_id = config['tokens']['spotify_id']
+    if "spotify_secret" in config['tokens'].keys():
+        spotify_secret = config['tokens']['spotify_secret']
+        
+    if spotify_id and spotify_secret:
+        client_credentials_manager = SpotifyClientCredentials(spotify_id, spotify_secret)
+        spotify = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 else:
     token = os.getenv('genius_token')
     genius = Genius(access_token=token, remove_section_headers=True)
+    
+    if "spotify_id" in config['tokens'].keys():
+        spotify_id = config['tokens']['spotify_id']
+    if "spotify_secret" in config['tokens'].keys():
+        spotify_secret = config['tokens']['spotify_secret']
+        
+    if spotify_client and spotify_id:
+        client_credentials_manager = SpotifyClientCredentials(spotify_id, spotify_secret)
+        spotify = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 # List with all the sessions currently active.
 sessions = []
@@ -61,11 +85,7 @@ async def continue_queue(bot, ctx):
 
     if voice.is_playing():
         voice.stop()
-
-    session.q.queue.pop(0)
-
-    voice.play(source, after=lambda e: prepare_continue_queue(ctx))
-    await ctx.send(f"Now playing: {session.q.current_music.title}")
+    voice.play(source, after=lambda e: prepare_continue_queue(bot, ctx))
     await ctx.send(f"""<{session.q.current_music.webpage_url}>
     Now playing: {session.q.current_music.title}""")
 
@@ -79,6 +99,8 @@ class MusicCommands(commands.Cog):
 
     @commands.command(name='play')
     async def play(self, ctx, *, arg):
+        arg_list = []
+        
         try:
             voice_channel = ctx.author.voice.channel
 
@@ -90,47 +112,65 @@ class MusicCommands(commands.Cog):
 
         # Finds author's session.
         session = check_session(ctx)
-
-        # Searches for the video
-        with youtube_dl.YoutubeDL({'format': 'bestaudio', 'noplaylist': 'True'}) as ydl:
-            try:
-                requests.get(arg)
-            except Exception as e:
-                print(e)
-                info = ydl.extract_info(f"ytsearch:{arg}", download=False)[
-                    'entries'][0]
+        
+        # checks if the link is from spotify
+        if arg.startswith('https://open.spotify.com') is True:
+            # checks if the link is a playlist 
+            if arg.startswith('https://open.spotify.com/playlist'):
+                for song in spotify.user_playlist_tracks(user="", playlist_id=arg):
+                    arg_list.append(f"{song['name']} - {song['album']['artists'][0]['name']}")
+            if arg.startswith('https://open.spotify.com/album'):
+                for song in spotify.album(arg)['tracks']['items']:
+                    arg_list.append(f"{song['name']} - {song['artists'][0]['name']}")
             else:
-                info = ydl.extract_info(arg, download=False)
-
-        url = info['formats'][0]['url']
-        webpage_url = info['webpage_url']
-        title = info['title']
-
-        session.q.enqueue(title, url, webpage_url)
-
-        # Finds an available voice client for the bot.
-        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-        if not voice:
-            await voice_channel.connect()
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        # If it is already playing something, adds to the queue
-        if voice.is_playing():
-            await ctx.send(f"""<{webpage_url}>
-    Added to queue: {title}""")
-            return
+                arg = spotify.track(track_id=arg)
+                arg = f"{arg['name']} - {arg['album']['artists'][0]['name']}"
+                arg_list.append(arg)
         else:
-            await ctx.send(f"""<{webpage_url}>
-    Added to queue: {title}""")
+            arg_list.append(arg)
 
-            # Guarantees that the requested music is the current music.
-            session.q.set_last_as_current()
+        for arg in arg_list:    
+            print(arg)
+            # Searches for the video
+            with yt_dlp.YoutubeDL({'format': 'bestaudio', 'skip_download': True}) as ydl:
+                try:
+                    requests.get(arg)
+                except Exception as e:
+                    print(e)
+                    info = ydl.extract_info(f"ytsearch:{arg}", download=False)['entries'][0]
+                else:
+                    info = ydl.extract_info(arg, download=False)
+                    
+                url = info['url']
+                webpage_url = info['webpage_url']
+                title = info['title']
+                number = len(session.q.queue) + 1
 
-            source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
-            voice.play(source, after=lambda ee: (prepare_continue_queue(self.bot, ctx), session.q.pop[0]))
+                session.q.enqueue(title, url, webpage_url, number)
+            
+                # Finds an available voice client for the bot.
+                voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+                await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
+                if not voice:
+                    await voice_channel.connect()
+                    voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+                    await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
 
+                # If it is already playing something, adds to the queue
+                if voice.is_playing():
+                    print("playing")
+            #        await ctx.send(f"""<{webpage_url}>
+            #Added to queue: {title}""")
+                else:
+            #        await ctx.send(f"""<{webpage_url}>
+            #Added to queue: {title}""")
+
+                    # Guarantees that the requested music is the current music.
+                    session.q.set_last_as_current()
+
+                    source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
+                    voice.play(source, after=lambda e: prepare_continue_queue(self.bot, ctx))
+                               
 ############-SKIP COMMAND-#####################################################################################
 
     @commands.command(name='next', aliases=['skip'])
@@ -140,16 +180,14 @@ class MusicCommands(commands.Cog):
 
         # Finds an available voice client for the bot.
         voice = discord.utils.get(self.bot.voice_clients, guild=session.guild)
-
         # If it is playing something, stops it. This works because of the "after" argument when calling voice.play as it is
         # a recursive loop and the current song is already going to play the next song when it stops.
         if voice.is_playing():
             voice.stop()
             # If there isn't any song to be played next, clear the queue and then return.
-            if session.q.theres_next() == False:
+            if session.q.theres_next() is False:
                 session.q.clear_queue()
-                return
-
+                await ctx.channel.send("The queue is empty.")
             return
         else:
             # If nothing is playing, finds the next song and starts playing it.
@@ -165,10 +203,12 @@ class MusicCommands(commands.Cog):
         session = check_session(ctx)
         # await ctx.send(f"Session ID: {session.id}")
         await ctx.send(f"Current song: {session.q.current_music.title}")
-        queue = [q[0] for q in session.q.queue]
+        queue = [q for q in session.q.queue]
+
         embed_desc = '\n'.join(
-            ''.join(x)
+            f'{x.number}.{x.title}'
             for x in queue)
+
         embed_to_send = discord.Embed(
             title="Queue",
             description=embed_desc
@@ -187,7 +227,7 @@ class MusicCommands(commands.Cog):
         arg = int(args[0]) - 1
 
         await ctx.send(f"removed {queue[arg][0]} from the queue")
-        queue.pop(arg)
+        session.q.queue.pop(arg)
         return
 
 ############-LEAVE COMMAND-####################################################################################

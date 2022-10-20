@@ -38,8 +38,8 @@ class Queue:
         Clears the queue, resetting all variables.
     """
     def __init__(self):
-        self.music = namedtuple('music', ('title', 'url', 'thumb'))
-        self.current_music = self.music('', '', '')
+        self.music = namedtuple('music', ('title', 'url', 'webpage_url', 'number'))
+        self.current_music = self.music('', '', '', '')
 
         self.last_title_enqueued = ''
         self.queue = []
@@ -53,7 +53,7 @@ class Queue:
         if index >= 0:
             self.current_music = self.queue[index]
 
-    def enqueue(self, music_title, music_url, music_webpage_url):
+    def enqueue(self, music_title, music_url, music_webpage_url, number):
         """
         Handles enqueue process appending the music tuple to the queue
         while setting last_title_enqueued and the current_music variables as needed
@@ -66,10 +66,10 @@ class Queue:
         :return: None
         """
         if len(self.queue) > 0:
-            self.queue.append(self.music(music_title, music_url, music_webpage_url))
+            self.queue.append(self.music(music_title, music_url, music_webpage_url, number))
         else:
-            self.queue.append(self.music(music_title, music_url, music_webpage_url))
-            self.current_music = self.music(music_title, music_url, music_webpage_url)
+            self.queue.append(self.music(music_title, music_url, music_webpage_url, number))
+            self.current_music = self.music(music_title, music_url, music_webpage_url, number)
 
     def dequeue(self):
         pass
