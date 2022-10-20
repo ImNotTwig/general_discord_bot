@@ -116,7 +116,8 @@ class MusicCommands(commands.Cog):
             if arg.startswith('https://open.spotify.com/playlist'):
                 for song in spotify.user_playlist_tracks(user="", playlist_id=arg):
                     arg_list.append(f"{song['name']} - {song['album']['artists'][0]['name']}")
-            if arg.startswith('https://open.spotify.com/album'):
+            # checks if the link is an album
+            elif arg.startswith('https://open.spotify.com/album'):
                 for song in spotify.album(arg)['tracks']['items']:
                     arg_list.append(f"{song['name']} - {song['artists'][0]['name']}")
             else:
@@ -126,10 +127,9 @@ class MusicCommands(commands.Cog):
         else:
             arg_list.append(arg)
 
-        for arg in arg_list:    
-            print(arg)
+        for arg in arg_list:
             # Searches for the video
-            with yt_dlp.YoutubeDL({'format': 'bestaudio', 'skip_download': True}) as ydl:
+            with yt_dlp.YoutubeDL({'skip_download': True}) as ydl:
                 try:
                     requests.get(arg)
                 except Exception as e:
@@ -168,7 +168,7 @@ class MusicCommands(commands.Cog):
     
                         source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
                         voice.play(source, after=lambda e: prepare_continue_queue(self.bot, ctx))
-                               
+
 ############-SKIP COMMAND-#####################################################################################
 
     @commands.command(name='next', aliases=['skip'])
