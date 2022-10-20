@@ -37,12 +37,10 @@ else:
     token = os.getenv('genius_token')
     genius = Genius(access_token=token, remove_section_headers=True)
     
-    if "spotify_id" in config['tokens'].keys():
-        spotify_id = config['tokens']['spotify_id']
-    if "spotify_secret" in config['tokens'].keys():
-        spotify_secret = config['tokens']['spotify_secret']
+    spotify_secret = os.getenv('spotify_secret')
+    spotify_id = os.getenv('spotify_id')
         
-    if spotify_client and spotify_id:
+    if spotify_secret and spotify_id is True:
         client_credentials_manager = SpotifyClientCredentials(spotify_id, spotify_secret)
         spotify = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
@@ -201,13 +199,17 @@ class MusicCommands(commands.Cog):
     @commands.command(name='queue', aliases=['q'])
     async def queue(self, ctx):
         session = check_session(ctx)
-        # await ctx.send(f"Session ID: {session.id}")
-        await ctx.send(f"Current song: {session.q.current_music.title}")
         queue = [q for q in session.q.queue]
+        embed_list = []
+        for x in queue:
+            if x.title == session.q.current_music.number:
+                embed_list.append(f'-> {x.number} - {x.title}')
+            else:
+                embed_list.append(f'{x.number} - {x.title}')
 
         embed_desc = '\n'.join(
-            f'{x.number}.{x.title}'
-            for x in queue)
+            f'{x}'
+            for x in embed_list)
 
         embed_to_send = discord.Embed(
             title="Queue",
