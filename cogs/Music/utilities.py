@@ -120,7 +120,7 @@ class Queue:
         :return: None
         """
         self.queue.clear()
-        self.current_music = self.music('', '', '')
+        self.current_music = self.music('', '', '', '')
 
 
 class Session:

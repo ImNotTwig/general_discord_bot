@@ -73,7 +73,7 @@ def prepare_continue_queue(bot, ctx):
 async def continue_queue(bot, ctx):
     session = check_session(ctx)
     if not session.q.theres_next():
-        await ctx.send("The queue is empty")
+        await ctx.send("The queue is at the end.")
         return
 
     session.q.next()
@@ -84,8 +84,7 @@ async def continue_queue(bot, ctx):
     if voice.is_playing():
         voice.stop()
     voice.play(source, after=lambda e: prepare_continue_queue(bot, ctx))
-    await ctx.send(f"""<{session.q.current_music.webpage_url}>
-    Now playing: {session.q.current_music.title}""")
+    await ctx.send(f"Now playing: {session.q.current_music.title}")
 
 ############-MUSIC COMMANDS-###################################################################################
 
@@ -98,6 +97,7 @@ class MusicCommands(commands.Cog):
     @commands.command(name='play')
     async def play(self, ctx, *, arg):
         arg_list = []
+        song_list = []
         try:
             voice_channel = ctx.author.voice.channel
 
@@ -129,7 +129,7 @@ class MusicCommands(commands.Cog):
 
         for arg in arg_list:
             # Searches for the video
-            with yt_dlp.YoutubeDL({'skip_download': True}) as ydl:
+            with yt_dlp.YoutubeDL({'downloader': 'aria2c', 'skip_download': True}) as ydl:
                 try:
                     requests.get(arg)
                 except Exception as e:
@@ -137,15 +137,40 @@ class MusicCommands(commands.Cog):
                     info = ydl.extract_info(f"ytsearch:{arg}", download=False)
                 else:
                     info = ydl.extract_info(arg, download=False)
-                
+                    
+                # print(info)
+                    
+                # if it has an entries field
+                if 'entries' in info.keys():
+                    pass
+                else:
+                    info['entries'] = [{}]
+                    info['entries'][0]['title'] = info['title']
+                    # if the song is from soundcloud
+                    if arg.startswith('https://soundcloud.com/') is True:
+                        info['entries'][0]['requested_formats'] = [{}, {}]
+                        info['entries'][0]['requested_formats'][1]['url'] = info['url']
+                    # if the song is from a discord attachment
+                    elif arg.startswith('https://cdn.discordapp.com/'):
+                        info['entries'][0]['requested_formats'] = [{}, {}]
+                        info['entries'][0]['requested_formats'][1]['url'] = info['formats'][0]['url']
+                    else:
+                        info['entries'][0]['requested_formats'] = info['requested_formats']
+                    info['entries'][0]['webpage_url'] = info['webpage_url']
+            
                 for entry in info['entries']:
                     title = entry['title']
-                    url = entry['url']
+                    if 'requested_formats' in entry.keys():
+                        url = entry['requested_formats'][1]['url']
+                    else:
+                        url = entry['url']
                     webpage_url = entry['webpage_url']
                     number = len(session.q.queue) + 1
+                
+                    song_list.append({'number': number, 'title': title})
 
                     session.q.enqueue(title, url, webpage_url, number)
-                
+            
                     # Finds an available voice client for the bot.
                     voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
                     await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
@@ -153,22 +178,27 @@ class MusicCommands(commands.Cog):
                         await voice_channel.connect()
                         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
                         await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-    
+
                     # If it is already playing something, adds to the queue
                     if voice.is_playing():
-                        print("playing")
+                        pass
                 #        await ctx.send(f"""<{webpage_url}>
                 #Added to queue: {title}""")
                     else:
                 #        await ctx.send(f"""<{webpage_url}>
                 #Added to queue: {title}""")
-    
+
                         # Guarantees that the requested music is the current music.
                         session.q.set_last_as_current()
-    
+
                         source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
                         voice.play(source, after=lambda e: prepare_continue_queue(self.bot, ctx))
-
+                    
+                embed_title = "Songs Added"
+                embed_desc = '\n'.join(
+                    f"{song['number']} - {song['title']}" 
+                    for song in song_list)
+                
 ############-SKIP COMMAND-#####################################################################################
 
     @commands.command(name='next', aliases=['skip'])
@@ -202,7 +232,7 @@ class MusicCommands(commands.Cog):
         queue = [q for q in session.q.queue]
         embed_list = []
         for x in queue:
-            if x.title == session.q.current_music.number:
+            if x.number == session.q.current_music.number:
                 embed_list.append(f'-> {x.number} - {x.title}')
             else:
                 embed_list.append(f'{x.number} - {x.title}')
