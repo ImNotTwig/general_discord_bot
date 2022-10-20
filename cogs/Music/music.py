@@ -98,7 +98,6 @@ class MusicCommands(commands.Cog):
     @commands.command(name='play')
     async def play(self, ctx, *, arg):
         arg_list = []
-        
         try:
             voice_channel = ctx.author.voice.channel
 
@@ -135,39 +134,40 @@ class MusicCommands(commands.Cog):
                     requests.get(arg)
                 except Exception as e:
                     print(e)
-                    info = ydl.extract_info(f"ytsearch:{arg}", download=False)['entries'][0]
+                    info = ydl.extract_info(f"ytsearch:{arg}", download=False)
                 else:
                     info = ydl.extract_info(arg, download=False)
-                    
-                url = info['url']
-                webpage_url = info['webpage_url']
-                title = info['title']
-                number = len(session.q.queue) + 1
+                
+                for entry in info['entries']:
+                    title = entry['title']
+                    url = entry['url']
+                    webpage_url = entry['webpage_url']
+                    number = len(session.q.queue) + 1
 
-                session.q.enqueue(title, url, webpage_url, number)
-            
-                # Finds an available voice client for the bot.
-                voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-                await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-                if not voice:
-                    await voice_channel.connect()
+                    session.q.enqueue(title, url, webpage_url, number)
+                
+                    # Finds an available voice client for the bot.
                     voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
                     await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-                # If it is already playing something, adds to the queue
-                if voice.is_playing():
-                    print("playing")
-            #        await ctx.send(f"""<{webpage_url}>
-            #Added to queue: {title}""")
-                else:
-            #        await ctx.send(f"""<{webpage_url}>
-            #Added to queue: {title}""")
-
-                    # Guarantees that the requested music is the current music.
-                    session.q.set_last_as_current()
-
-                    source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
-                    voice.play(source, after=lambda e: prepare_continue_queue(self.bot, ctx))
+                    if not voice:
+                        await voice_channel.connect()
+                        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+                        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
+    
+                    # If it is already playing something, adds to the queue
+                    if voice.is_playing():
+                        print("playing")
+                #        await ctx.send(f"""<{webpage_url}>
+                #Added to queue: {title}""")
+                    else:
+                #        await ctx.send(f"""<{webpage_url}>
+                #Added to queue: {title}""")
+    
+                        # Guarantees that the requested music is the current music.
+                        session.q.set_last_as_current()
+    
+                        source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
+                        voice.play(source, after=lambda e: prepare_continue_queue(self.bot, ctx))
                                
 ############-SKIP COMMAND-#####################################################################################
 
