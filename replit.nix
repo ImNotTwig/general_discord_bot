@@ -2,6 +2,7 @@
   deps = with python310Packages; [
     python-lsp-black
     poetry
+    ffmpeg
   ];
   env = {
     PYTHON_LD_LIBRARY_PATH = lib.makeLibraryPath [
