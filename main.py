@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
 import asyncio
-import json
 import os
+from config import config
 
 from cogs.Unbound.unbound import UnboundCommands
 from cogs.Music.music import MusicCommands
@@ -11,15 +11,12 @@ from cogs.LevelSystem.levelsystem import LevelSystemCommands
 
 ###############################################################################################################
 
-with open("config.json", 'r', encoding="utf8") as file:
-    config = json.load(file)
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
 intents.members = True
 
-bot = commands.Bot(command_prefix=config['prefix'], intents=intents, help_command=None)
+bot = commands.Bot(command_prefix=config.prefix, intents=intents, help_command=None)
 
 ###############################################################################################################
 
@@ -28,7 +25,7 @@ bot = commands.Bot(command_prefix=config['prefix'], intents=intents, help_comman
 async def on_ready():
     print(f'Logged in as {bot.user}')
     #setting status to "listening to {prefix}help" eg: "listening to ~help"
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f'{config["prefix"]}help'))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f'{config.prefix}help'))
 
 
 @bot.event
@@ -52,18 +49,7 @@ if __name__ == '__main__':
     asyncio.run(bot.add_cog(MusicCommands(bot)))
     asyncio.run(bot.add_cog(ModerationCommands(bot)))
 
-    if config['level_system']['levels_on'] is True:
+    if config.level_system.levels_on is True:
         asyncio.run(bot.add_cog(LevelSystemCommands(bot)))
 
-    if "tokens" in config.keys():
-        bot.run(config['tokens']["discord_token"])
-
-    elif os.getenv("discord_token"):
-        bot.run(os.getenv('discord_token'))
-
-    else:
-        print("""You have not supplied a token either:
-
-add the discord_token field in your .env file
-or
-add the discord_token field in your config.json""")
+    bot.run(config.tokens.discord_token)

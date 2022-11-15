@@ -28,6 +28,8 @@ class MusicCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+############-PLAY COMMAND-#####################################################################################
+
     @commands.command(name="play")
     async def play(self, ctx, *arg):
 
