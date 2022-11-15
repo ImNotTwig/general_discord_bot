@@ -2,7 +2,7 @@
     "global": {
         "389202953862512641": {
             "level": 20,
-            "total_xp": 6411
+            "total_xp": 6425
         },
         "725836730846019644": {
             "level": 6,
@@ -81,8 +81,8 @@
     "1041572826907422850": {
         "389202953862512641": {
             "level": 0,
-            "total_xp": 47,
-            "current_xp": 47,
+            "total_xp": 89,
+            "current_xp": 89,
             "xp_needed": 100,
             "can_gain_xp": true
         }

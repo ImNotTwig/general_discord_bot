@@ -38,6 +38,7 @@ class Queue:
         self.voice.stop()
         self.play()
 
+    # play from the current posistion of the queue
     async def play(self):
         # getting the voice channel we are connected to
         voice = discord.utils.get(self.bot.voice_clients, guild=self.ctx.guild)
@@ -49,7 +50,7 @@ class Queue:
         # the source from ffmpeg to play on the bot
         source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
 
-        # playing the music, this also calls this function again when its done
+        # playing the music, this also calls the play next function again when its done
         voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
 
         # send a message for the music that we are now playing
@@ -57,6 +58,7 @@ class Queue:
 
         self.voice = voice
 
+    # play the last song in the queue
     async def play_last(self):
         self.current_pos = self.len()
 
@@ -87,6 +89,7 @@ class Queue:
 
         self.voice = voice
 
+    # play the last song in the queue
     async def play_next(self):
         # incrementing the current posistion
         # this is so we can play the *next* song
