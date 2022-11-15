@@ -1,0 +1,16 @@
+prefix = "~"
+
+[tokens]
+discord_token = ""
+genius_token = ""
+spotify_id = ""
+spotify_secret = ""
+
+[spam_settings]
+antispam = true
+spam_count = 5
+
+[level_system]
+levels_on = true
+xp_per_message = [10, 15]
+cooldown_in_seconds = 60
