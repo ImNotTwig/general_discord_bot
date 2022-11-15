@@ -1,8 +1,8 @@
 {
     "global": {
         "389202953862512641": {
-            "level": 20,
-            "total_xp": 6363
+            "level": 0,
+            "total_xp": 0
         },
         "725836730846019644": {
             "level": 6,
@@ -15,14 +15,6 @@
         "415006070008709121": {
             "level": 5,
             "total_xp": 1101
-        },
-        "500658624109084682": {
-            "level": 0,
-            "total_xp": 0
-        },
-        "1016490604093509692": {
-            "level": 0,
-            "total_xp": 0
         }
     },
     "722092863994855534": {
@@ -58,33 +50,19 @@
     "852658516987609148": {
         "389202953862512641": {
             "level": 13,
-            "total_xp": 4722,
-            "current_xp": 202,
+            "total_xp": 4659,
+            "current_xp": 139,
             "xp_needed": 825,
-            "can_gain_xp": false
-        },
-        "500658624109084682": {
-            "level": 0,
-            "total_xp": 13,
-            "current_xp": 13,
-            "xp_needed": 100,
-            "can_gain_xp": true
-        },
-        "1016490604093509692": {
-            "level": 0,
-            "total_xp": 39,
-            "current_xp": 39,
-            "xp_needed": 100,
             "can_gain_xp": true
         }
     },
     "1041572826907422850": {
         "389202953862512641": {
             "level": 0,
-            "total_xp": 47,
-            "current_xp": 47,
+            "total_xp": 36,
+            "current_xp": 36,
             "xp_needed": 100,
-            "can_gain_xp": true
+            "can_gain_xp": false
         }
     }
 }

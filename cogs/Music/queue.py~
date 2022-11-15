@@ -1,0 +1,49 @@
+import discord
+from dataclasses import dataclass
+import yt_dlp
+
+FFMPEG_OPTIONS = {
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'
+}
+
+
+@dataclass
+class Song:
+    title: str
+    url: str
+    number_in_queue: int
+
+
+@dataclass
+class Queue:
+    # a list of songs which contains 
+    # (title, url, and number_in_queue)
+    songs: list
+    current_pos: int
+    loop: bool
+    paused: bool
+
+    def enqueue(self, song: Song):
+        self.songs.append(song)
+
+    async def play_next(self, bot, ctx):
+
+        self.current_pos += 1
+        #check if loop is on, and if the queue is at the end 
+        #so we can know to wrap back to the front of the queue or not
+
+        if self.current_pos == self.songs[-1].number_in_queue:
+            if self.loop is False:
+                ctx.channel.send("The queue has reached the end.")
+
+            if self.loop is True:
+                self.current_pos = 1
+
+        voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+
+        with yt_dlp.YoutubeDL({'fragment_count': '64', 'extract_flat': True, 'format': 'bestaudio/best', 'downloader': 'aria2c', 'skip_download': True, 'dump_single_json': True}) as ydl:
+            info = ydl.extract_info(self.songs.index(self.current_pos).url, download=False)
+        source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
+        voice.play(source, after=lambda e: self.play_next(bot, ctx))
+
+        #play the next song and when its done run this function again

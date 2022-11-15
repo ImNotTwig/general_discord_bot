@@ -1,0 +1,16 @@
+prefix = "~"
+
+[tokens]
+discord_token = "MTAxNjQ5MDYwNDA5MzUwOTY5Mg.G5H012.zeCDR2jsEa-qkt_2BhYsr_4o_jz1jt_jxqONR0"
+genius_token = "KYcW1K7_9k7Y1rh_UTESkCwWblrqRvCAyPUHJjWrKGhSVPZd4MMkuYWoWvIT1zG5"
+spotify_id = "2a4c33fcd6bf4d5e81d44414058a6d5f"
+spotify_secret = "eabfc9d32b6944bd8c5a2417c9cb9da1"
+
+[spam_settings]
+antispam = true
+spam_count = 5
+
+[level_system]
+levels_on = true
+xp_per_message = [10, 15]
+cooldown_in_seconds = 60

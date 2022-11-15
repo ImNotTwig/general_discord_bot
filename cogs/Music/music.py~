@@ -189,10 +189,8 @@ class MusicCommands(commands.Cog):
         if voice.is_playing() is True:
             pass
         else:
-            if queue_dict[ctx.guild.id].end_of_queue is True:
-                await queue_dict[ctx.guild.id].play_last()
-            else:
-                await queue_dict[ctx.guild.id].play_next()
+            queue_dict[ctx.guild.id].current_pos = queue_dict[ctx.guild.id].len()
+            await queue_dict[ctx.guild.id].play_last()
             queue_dict[ctx.guild.id].voice.resume()
 
 ############-QUEUE COMMAND-####################################################################################

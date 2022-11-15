@@ -198,7 +198,7 @@ class ModerationCommands(commands.Cog):
 
 ############-BLACKLIST COMMAND-################################################################################
 
-    @commands.command(name="blacklist", aliases=["bl"])
+    @commands.command(name="blacklist")
     @commands.has_permissions(manage_messages=True)
     async def blacklist(self, ctx, arg: str):
         if ctx.guild.id not in blacklist_dict.keys():

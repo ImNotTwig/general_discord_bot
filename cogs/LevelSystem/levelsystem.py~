@@ -154,8 +154,8 @@ class LevelSystemCommands(commands.Cog):
             return
 
         # if author is a bot
-        if message.author.bot is True:
-            return
+        # if message.author.bot is True:
+        #     return
 
         # if the server has the level system turned on
         if server_enabler[str(message.guild.id)] is True:
