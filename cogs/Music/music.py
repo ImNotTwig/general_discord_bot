@@ -10,22 +10,6 @@ from config import config
 from cogs.Music.song_queue import Queue
 from cogs.Music.song_queue import Song
 
-
-"""
-TODO:
-- Implement a Queue system
-    - queue is a list of dicts that are as follows
-    {
-    'name': str,
-    'url': str,
-    'number': int
-    }
-    - when a song is done playing, play the next song on discord and, remove it from the queue
-- Lyric Command
-- Shuffle Queue command
-- Add a function that takes an argument from the user and returns a list of song urls and titles
-"""
-
 ############-CONFIGS-##########################################################################################
 
 if config.tokens.genius_token:
