@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import toml
-
+import os
 
 @dataclass
 class Tokens:
@@ -32,6 +32,9 @@ class Config:
 
 with open('config.toml') as config_file:
     config = toml.load(config_file)
+
+if not config['tokens']['discord_token']:
+    config['tokens']['discord_token'] = os.getenv('discord_token')
 
 tokens = Tokens(
     discord_token=config['tokens']['discord_token'],

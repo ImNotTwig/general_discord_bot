@@ -3,9 +3,17 @@ from dataclasses import dataclass
 import yt_dlp
 
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'options': '-vn'
 }
-
+YTDLP_OPTIONS = {
+    'fragment_count': '64',
+    'extract_flat': True,
+    'format': 'bestaudio/best',
+    'downloader': 'aria2c',
+    'skip_download': True,
+    'dump_single_json': True
+}
 
 @dataclass
 class Song:
@@ -44,7 +52,7 @@ class Queue:
         voice = discord.utils.get(self.bot.voice_clients, guild=self.ctx.guild)
 
         # getting the link to stream over ffmpeg
-        with yt_dlp.YoutubeDL({'fragment_count': '64', 'extract_flat': True, 'format': 'bestaudio/best', 'downloader': 'aria2c', 'skip_download': True, 'dump_single_json': True}) as ydl:
+        with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
             info = ydl.extract_info(self.current().url, download=False)
 
         # the source from ffmpeg to play on the bot
@@ -71,7 +79,7 @@ class Queue:
             paused = True
 
         # getting the link to stream over ffmpeg
-        with yt_dlp.YoutubeDL({'fragment_count': '64', 'extract_flat': True, 'format': 'bestaudio/best', 'downloader': 'aria2c', 'skip_download': True, 'dump_single_json': True}) as ydl:
+        with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
             info = ydl.extract_info(self.current().url, download=False)
 
         # the source from ffmpeg to play on the bot
@@ -107,8 +115,9 @@ class Queue:
                 # pause the queue and pause the discord player
                 self.voice.pause()
                 paused = True
-                if self.end_of_queue is True:
-                    await self.ctx.send("The queue has reached the end. The player has paused.")
+                if self.voice.channel.members != 0:
+                    if self.end_of_queue is True:
+                        await self.ctx.send("The queue has reached the end. The player has paused.")
                 self.end_of_queue = True
                 # set the current posistion to the song at the end of the queue
                 # this is because when we play a song after this it will play that song
@@ -122,7 +131,7 @@ class Queue:
         voice = discord.utils.get(self.bot.voice_clients, guild=self.ctx.guild)
 
         # getting the link to stream over ffmpeg
-        with yt_dlp.YoutubeDL({'fragment_count': '64', 'extract_flat': True, 'format': 'bestaudio/best', 'downloader': 'aria2c', 'skip_download': True, 'dump_single_json': True}) as ydl:
+        with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
             info = ydl.extract_info(self.current().url, download=False)
 
         # the source from ffmpeg to play on the bot
