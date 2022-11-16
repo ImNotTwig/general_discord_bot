@@ -5,7 +5,6 @@ import yt_dlp
 import os
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from pysoundcloud import Client
 from discord.ext import commands
 from lyricsgenius import Genius
 from config import config
@@ -36,8 +35,8 @@ if config.tokens.spotify_id and config.tokens.spotify_secret:
         config.tokens.spotify_id, config.tokens.spotify_secret)
     spotify = spotipy.Spotify(
         client_credentials_manager=client_credentials_manager)
-
-soundcloud = Client("YUKXoArFcqrlQn9tfNHvvyfnDISj04zk")
+else:
+    print("Spotify could not be initialized, if you want spotify support please input your credentials into the config file")
 
 ############-MUSIC COMMANDS-###################################################################################
 
@@ -50,7 +49,7 @@ class MusicCommands(commands.Cog):
 
 ############-PLAY COMMAND-#####################################################################################
 
-    @commands.command(name="play")
+    @commands.command(name="play", case_insensitive=True)
     async def play(self, ctx, *arg):
 
         arg = ' '.join(arg)
@@ -98,11 +97,43 @@ class MusicCommands(commands.Cog):
             song_list.append(song)
 
         elif arg.startswith("https://soundcloud"):
+            with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
+                try:
+                    requests.get(arg)
+                except Exception as e:
+                    print(e)
+                    info = ydl.extract_info(f"ytsearch:{arg}", download=False)
+                else:
+                    info = ydl.extract_info(arg, download=False)
 
-            playlist_or_song = soundcloud.playlist(playlist_url=arg)
-            
-            print(playlist_or_song)
-            
+                if 'entries' in info.keys():
+                    for entry in info['entries']:
+                        await asyncio.sleep(.1)
+                        try:
+                            requests.get(entry['url'])
+                        except Exception as e:
+                            print(e)
+                            song_info = ydl.extract_info(f"ytsearch:{entry['url']}", download=False)
+                        else:
+                            song_info = ydl.extract_info(entry['url'], download=False)
+
+                        entry['title'] = song_info['title']
+                            
+                        song = Song(
+                            title=entry['title'],
+                            url=entry['url'],
+                            number_in_queue=queue_dict[ctx.guild.id].len() + 1
+                        )
+                        queue_dict[ctx.guild.id].enqueue(song)
+
+                        if voice.is_playing() is True:
+                            pass
+                        else:
+                            if queue_dict[ctx.guild.id].end_of_queue is True:
+                                await queue_dict[ctx.guild.id].play_last()
+                            else:
+                                await queue_dict[ctx.guild.id].play_next()
+                                queue_dict[ctx.guild.id].voice.resume()
             
 
         # handling youtube links and searches
@@ -170,10 +201,14 @@ class MusicCommands(commands.Cog):
                             number_in_queue=queue_dict[ctx.guild.id].len() + 1
                         )
                         queue_dict[ctx.guild.id].enqueue(song)
-                    if voice.is_playing():
+                    if voice.is_playing() is True:
                         pass
                     else:
-                        await queue_dict[ctx.guild.id].play_next()
+                        if queue_dict[ctx.guild.id].end_of_queue is True:
+                            await queue_dict[ctx.guild.id].play_last()
+                        else:
+                            await queue_dict[ctx.guild.id].play_next()
+                        queue_dict[ctx.guild.id].voice.resume()
 
         if voice.is_playing() is True:
             pass
@@ -186,7 +221,7 @@ class MusicCommands(commands.Cog):
 
 ############-QUEUE COMMAND-####################################################################################
 
-    @commands.command(name="queue", aliases=["q"])
+    @commands.command(name="queue", aliases=["q"], case_insensitive=True)
     async def queue(self, ctx):
 
         embed_list = []
@@ -212,7 +247,7 @@ class MusicCommands(commands.Cog):
 
 ############-NOWPLAYING COMMAND-###############################################################################
 
-    @commands.command(name="nowplaying", aliases=["np"])
+    @commands.command(name="nowplaying", aliases=["np"], case_insensitive=True)
     async def nowplaying(self, ctx):
 
         embed_to_send = discord.Embed(
@@ -225,7 +260,7 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
 ############-PAUSE COMMAND-####################################################################################
 
-    @commands.command(name="pause")
+    @commands.command(name="pause", case_insensitive=True)
     async def pause(self, ctx):
 
         try:
@@ -252,7 +287,7 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
 ############-UNPAUSE COMMAND-##################################################################################
 
-    @commands.command(name="unpause", aliases=["resume"])
+    @commands.command(name="unpause", aliases=["resume"], case_insensitive=True)
     async def unpause(self, ctx):
 
         try:
@@ -276,7 +311,7 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
 ############-SKIP COMMAND-#####################################################################################
 
-    @commands.command(name="next", aliases=["skip"])
+    @commands.command(name="next", aliases=["skip"], case_insensitive=True)
     async def next(self, ctx):
         try:
             voice_channel = ctx.author.voice.channel
@@ -301,7 +336,7 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
 ############-GOTO COMMAND-#####################################################################################
 
-    @commands.command(name="goto")
+    @commands.command(name="goto", case_insensitive=True)
     async def goto(self, ctx, arg: int):
         try:
             voice_channel = ctx.author.voice.channel
@@ -325,7 +360,7 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
 ############-LEAVE COMMAND-####################################################################################
 
-    @commands.command(name="leave", aliases=["fuckoff", "disconnect", "quit"])
+    @commands.command(name="leave", aliases=["fuckoff", "disconnect", "quit", "stop"], case_insensitive=True)
     async def leave(self, ctx):
         try:
             voice_channel = ctx.author.voice.channel
@@ -350,7 +385,7 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
 ############-REMOVE COMMAND-###################################################################################
 
-    @commands.command(name="remove")
+    @commands.command(name="remove", case_insensitive=True)
     async def remove(self, ctx, arg: int):
         if arg == queue_dict[ctx.guild.id].current().number_in_queue:
             await ctx.channel.send("You can't remove the currently playing song.")

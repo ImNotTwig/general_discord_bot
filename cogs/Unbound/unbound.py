@@ -16,7 +16,7 @@ class UnboundCommands(commands.Cog):
 
 ############-MOVES COMMAND-####################################################################################
 
-    @commands.command(name='moves')                                    #MOVES
+    @commands.command(name='moves', case_insensitive=True)             #MOVES
     async def moves(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
         lvl_up_element = lvlupmoves_dict.get(args ,False)              #querying for the dictionary
@@ -37,7 +37,7 @@ class UnboundCommands(commands.Cog):
 
 ############-EGGMOVES COMMAND-#################################################################################
 
-    @commands.command(name='eggmoves')                                 #EGGMOVES
+    @commands.command(name='eggmoves', case_insensitive=True)          #EGGMOVES
     async def eggmoves(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
         egg_moves_element = eggmoves_dict.get(args, False)             #querying for the dictionary
@@ -56,7 +56,7 @@ class UnboundCommands(commands.Cog):
 
 ############-ABILITY COMMAND-##################################################################################
 
-    @commands.command(name='ability')                                  #ABILITY
+    @commands.command(name='ability', case_insensitive=True)           #ABILITY
     async def ability(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
         abilities_element = abilities_dict.get(args, False)
@@ -89,7 +89,7 @@ class UnboundCommands(commands.Cog):
 
 ############-TMLOCATION COMMAND-###############################################################################
 
-    @commands.command(name='tmlocation', aliases=['tm'])                #TMLOCATION
+    @commands.command(name='tmlocation', aliases=['tm'], case_insensitive=True) #TMLOCATION
     async def tmlocation(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
         q = args
@@ -114,7 +114,7 @@ class UnboundCommands(commands.Cog):
 
 ############-Z COMMAND-########################################################################################
 
-    @commands.command(name='z')                                         #Z
+    @commands.command(name='z', case_insensitive=True)                  #Z
     async def z(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
@@ -133,7 +133,7 @@ class UnboundCommands(commands.Cog):
 
 ############-MEGASTONE COMMAND-################################################################################
 
-    @commands.command(name='megastone')                                 #MEGASTONE
+    @commands.command(name='megastone', case_insensitive=True)          #MEGASTONE
     async def megastone(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
@@ -152,7 +152,7 @@ class UnboundCommands(commands.Cog):
 
 ############-HELDITEM COMMAND-################################################################################
 
-    @commands.command(name='helditem')                                  #HELDITEM
+    @commands.command(name='helditem', case_insensitive=True)           #HELDITEM
     async def helditem(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
@@ -191,7 +191,7 @@ class UnboundCommands(commands.Cog):
 
 ############-DIFFICULTY COMMAND-###############################################################################
 
-    @commands.command(name='difficulty')                                #DIFFICULTY
+    @commands.command(name='difficulty', case_insensitive=True)         #DIFFICULTY
     async def difficulty(self, ctx):
 
         embedToSend = discord.Embed(title= '**Which difficulty should I pick:**')
@@ -205,7 +205,7 @@ class UnboundCommands(commands.Cog):
 
 ############-SHINY COMMAND-####################################################################################
 
-    @commands.command(name='shiny', aliases=['shinyodd'])               #SHINYODD & SHINY
+    @commands.command(name='shiny', aliases=['shinyodd'], case_insensitive=True) #SHINYODD & SHINY
     async def shiny(self, ctx):
         embedTitle = '**Shiny Odds:**'
         embedBody = constants.shiny_odd_text
@@ -218,7 +218,7 @@ class UnboundCommands(commands.Cog):
 
 ############-PICKUP COMMAND-###################################################################################
 
-    @commands.command(name='pickup')                                    #PICKUP
+    @commands.command(name='pickup', case_insensitive=True)             #PICKUP
     async def pickup(self, ctx):
 
         embedToSend = discord.Embed(title=constants.pick_up_image_source[0]) #creates embed
@@ -228,7 +228,7 @@ class UnboundCommands(commands.Cog):
 
 ############-KBT COMMAND-######################################################################################
 
-    @commands.command(name='kbt')                                       #KBT
+    @commands.command(name='kbt', case_insensitive=True)                #KBT
     async def kbt(self, ctx):
 
         embedToSend = discord.Embed(title=constants.kbt_image_source[0])#creates embed
@@ -238,7 +238,7 @@ class UnboundCommands(commands.Cog):
 
 ############-BREEDING COMMAND-#################################################################################
 
-    @commands.command(name='breeding')                                  #BREEDING
+    @commands.command(name='breeding', case_insensitive=True)           #BREEDING
     async def breeding(self, ctx):
 
         embedToSend = discord.Embed(title= '**Extreme Hyperosmia Breeding Help:**')
@@ -252,7 +252,7 @@ class UnboundCommands(commands.Cog):
 
 ############-CAPS COMMAND-#####################################################################################
 
-    @commands.command(name='caps', aliases=['lvlcaps'])                 #CAPS & LVLCAPS
+    @commands.command(name='caps', aliases=['lvlcaps'], case_insensitive=True) #CAPS & LVLCAPS
     async def caps(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
@@ -272,7 +272,7 @@ class UnboundCommands(commands.Cog):
 
 ############-DOWNLOAD COMMAND-#################################################################################
 
-    @commands.command(name='download')                                  #DOWNLOAD
+    @commands.command(name='download', case_insensitive=True)           #DOWNLOAD
     async def download(self, ctx):
 
         embedToSend = discord.Embed(
@@ -284,7 +284,7 @@ class UnboundCommands(commands.Cog):
 
 ############-DOCS COMMAND-#####################################################################################
 
-    @commands.command(name='docs')                                      #DOCS
+    @commands.command(name='docs', case_insensitive=True)               #DOCS
     async def docs(self, ctx):
 
         embedTitle = '**Official Unbound Docs:**'                       #extracting the name of the pokemon
@@ -300,7 +300,7 @@ class UnboundCommands(commands.Cog):
 
 ############-LEARNTM COMMAND-##################################################################################
 
-    @commands.command(name='learntm')                                   #LEARNTM
+    @commands.command(name='learntm', case_insensitive=True)            #LEARNTM
     async def learntm(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
@@ -324,7 +324,7 @@ class UnboundCommands(commands.Cog):
 
 ############-TUTOR COMMAND-####################################################################################
 
-    @commands.command(name='tutor')                                     #TUTOR
+    @commands.command(name='tutor', case_insensitive=True)              #TUTOR
     async def tutor(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
@@ -347,7 +347,7 @@ class UnboundCommands(commands.Cog):
 
 ############-MOVEINFO COMMAND-#################################################################################
 
-    @commands.command(name='moveinfo')                                  #MOVEINFO
+    @commands.command(name='moveinfo', case_insensitive=True)           #MOVEINFO
     async def moveinfo(self, ctx, *args):
         args = helperfunctions.normalizeString(' '.join(args))
 
@@ -368,7 +368,7 @@ class UnboundCommands(commands.Cog):
 
 ############-STATS COMMAND-####################################################################################
 
-    @commands.command(name='stats')                                     #STATS AND SCALEMONS
+    @commands.command(name='stats', case_insensitive=True)              #STATS AND SCALEMONS
     async def stats(self, interaction: discord.interactions, *args):
         scalemonFlag = False                                            #setting the scalemon flag to be false initially
 
@@ -423,7 +423,7 @@ class UnboundCommands(commands.Cog):
 
 ############-GIFTS COMMAND-####################################################################################
 
-    @commands.command(name='gifts')                                          #GIFTS
+    @commands.command(name='gifts', case_insensitive=True)              #GIFTS
     async def gifts(self, interaction: discord.interactions, *args):
         menu = ViewMenu(interaction, menu_type=ViewMenu.TypeEmbed, remove_buttons_on_timeout=True, all_can_click=False)
 

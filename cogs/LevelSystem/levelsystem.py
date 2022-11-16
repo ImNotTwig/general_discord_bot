@@ -58,7 +58,7 @@ class LevelSystemCommands(commands.Cog):
 
 ############-XP COMMAND-#######################################################################################
 
-    @commands.command(name="xp", pass_context=True)
+    @commands.command(name="xp", pass_context=True, case_insensitive=True)
     async def xp(self, ctx):
         # setting author name
         server = str(ctx.message.guild.id)
@@ -211,7 +211,7 @@ class LevelSystemCommands(commands.Cog):
 
 ############-LEADERBOARD COMMAND-##############################################################################
 
-    @commands.command(name="leaderboard")
+    @commands.command(name="leaderboard", case_insensitive=True)
     async def leaderboard(self, ctx):
         server = str(ctx.message.guild.id)
         server_dict = levels[server]
@@ -247,7 +247,7 @@ Total Xp: {tempxp}""", inline=False)
 
 ############-LEVELSWITCH COMMAND-##############################################################################
 
-    @commands.command(name="levelswitch")
+    @commands.command(name="levelswitch", case_insensitive=True)
     @commands.has_permissions(manage_messages=True)
     async def levelswitch(self, ctx, arg):
         server = str(ctx.guild.id)
@@ -265,7 +265,7 @@ Total Xp: {tempxp}""", inline=False)
 
 ############-GIVEXP COMMAND-###################################################################################
 
-    @commands.command(name="givexp")
+    @commands.command(name="givexp", case_insensitive=True)
     @commands.has_permissions(manage_messages=True)
     async def givexp(self, ctx, member: discord.Member, arg):
         try:

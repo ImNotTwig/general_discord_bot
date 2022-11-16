@@ -22,7 +22,7 @@ class ModerationCommands(commands.Cog):
 
 ############-KICK COMMAND-#####################################################################################
 
-    @commands.command(name="kick", pass_context=True)
+    @commands.command(name="kick", pass_context=True, case_insensitive=True)
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx, member: discord.Member, *, reason=None):
 
@@ -36,7 +36,7 @@ class ModerationCommands(commands.Cog):
 
 ############-BAN COMMAND-######################################################################################
 
-    @commands.command(name="ban", pass_context=True)
+    @commands.command(name="ban", pass_context=True, case_insensitive=True)
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx, member: discord.Member, *, reason=None):
 
@@ -50,7 +50,7 @@ class ModerationCommands(commands.Cog):
 
 ############-MUTE COMMAND-#####################################################################################
 
-    @commands.command(name="mute", pass_context=True)
+    @commands.command(name="mute", pass_context=True, case_insensitive=True)
     @commands.has_permissions(manage_messages=True, manage_roles=True)
     async def mute(self, ctx, member: discord.Member, *args):
         args = list(args)
@@ -156,7 +156,7 @@ class ModerationCommands(commands.Cog):
 
 ############-UNMUTE COMMAND-###################################################################################
 
-    @commands.command(name="unmute", pass_context=True)
+    @commands.command(name="unmute", pass_context=True, case_insensitive=True)
     @commands.has_permissions(manage_messages=True, manage_roles=True)
     async def unmute(self, ctx, member: discord.Member):
 
@@ -171,7 +171,7 @@ class ModerationCommands(commands.Cog):
 
 ############-MUTEROLE COMMAND-#################################################################################
 
-    @commands.command(name="muterole")
+    @commands.command(name="muterole", case_insensitive=True)
     @commands.has_permissions(manage_roles=True)
     async def muterole(self, ctx, role: discord.Role):
 
@@ -186,7 +186,7 @@ class ModerationCommands(commands.Cog):
 
 ############-PURGE COMMAND-####################################################################################
 
-    @commands.command(name="purge", aliases=["clear"])
+    @commands.command(name="purge", aliases=["clear"], case_insensitive=True)
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx, arg: int):
         await ctx.channel.purge(limit=arg + 1)
@@ -198,7 +198,7 @@ class ModerationCommands(commands.Cog):
 
 ############-BLACKLIST COMMAND-################################################################################
 
-    @commands.command(name="blacklist", aliases=["bl"])
+    @commands.command(name="blacklist", aliases=["bl"], case_insensitive=True)
     @commands.has_permissions(manage_messages=True)
     async def blacklist(self, ctx, arg: str):
         if ctx.guild.id not in blacklist_dict.keys():
