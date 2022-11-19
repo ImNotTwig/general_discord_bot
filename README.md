@@ -23,7 +23,7 @@ if it isn't, then click "Reset Token" and follow the steps Discord gives you.
 
 7 - Once you have the token copied, rename example_config.toml to config.toml and paste your token into the discord_token field under [tokens]
 
-
+-----------------------------------------------------------------------------------------------------------------------------------------
 
 The genius token and spotify id/secret are optional, but if you want spotify support for the music module you need the spotify credentials
 
