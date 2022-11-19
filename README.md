@@ -31,8 +31,7 @@ You need a bot token to start up the bot, below will be the steps for getting on
 5 - Enable "Server Members Intent" and "Message Content Intent"
 
 
-6 - Scroll back up until you see "Token" if it is displaing a long list of characters copy that, that's your token.
-if it isn't, then click "Reset Token" and follow the steps Discord gives you.
+6 - Scroll back up until you see "Token" if it is displaing a long list of characters copy that, that's your token. if it isn't, then click "Reset Token" and follow the steps Discord gives you.
 
 
 7 - Once you have the token copied, rename example_config.toml to config.toml and paste your token into the discord_token field under [tokens]
@@ -51,8 +50,7 @@ Steps for getting the spotify id/secret
 
 4 - On the left side of the screen there should be your Client Id, copy that and paste it into the config.toml
 
-5 - When you're done with that go back to the spotify dashboard and click "Show Client Secret", copy that and paste it into the config.toml
-and you should be done with the spotify credentials
+5 - When you're done with that go back to the spotify dashboard and click "Show Client Secret", copy that and paste it into the config.toml and you should be done with the spotify credentials
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -80,8 +78,12 @@ the prefix your bot uses, so if you have it as ~ the help command would be "~hel
     
 -----------------------------------------------------------------------------------------------------------------------------------------
 
+- Running the bot
+  - Once you have everything set up, cd in to the directory of the main.py file then run the main.py file with either `python main.py` or `python3 main.py`
+    
+-----------------------------------------------------------------------------------------------------------------------------------------
+
 - Some Notes
-  - When playing from Spotify or Soundcloud, the bot has to first download the title/artist or link to the song, then plug it into yt-dlp
-  this makes the process very slow compared to just playing a youtube link, discord media link, or bandcamp link
+  - When playing from Spotify or Soundcloud, the bot has to first download the title/artist or link to the song, then plug it into yt-dlp this makes the process very slow compared to just playing a youtube link, discord media link, or bandcamp link
   
   - I have been using a linux system for testing, I do not have a windows, or mac system to test this on, if you encounter issues please report them.
