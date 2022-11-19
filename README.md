@@ -1,4 +1,3 @@
-# meww_bot_in_python
 
 You need a bot token to start up the bot, below will be the steps for getting one.
 
@@ -49,17 +48,17 @@ the prefix your bot uses, so if you have it as ~ the help command would be "~hel
 
 - [spam_settings]
   - antispam
-  set this to true if you want to enable antispam bot-wide, you can still disable/enable it per server too.
+    - set this to true if you want to enable antispam bot-wide, you can still disable/enable it per server too.
   
   - spam_count
-  this is the amount of the same message a person can send in a row before they would be muted for spamming.
+    - this is the amount of the same message a person can send in a row before they would be muted for spamming.
  
 - [level_system]
   - levels_on
-  set this on to enable the level_system bot-wide, it can still be disabled/enabled per server.
+    - set this on to enable the level_system bot-wide, it can still be disabled/enabled per server.
   
   - xp_per_message
-  this is a range of two integers, a user can receive xp between the two, whenever they gain xp
+    - this is a range of two integers, a user can receive xp between the two, whenever they gain xp
   
   - cooldown_in_seconds
-  this is the amount of seconds that a user has to wait before they can gain xp from talking in the server.
+    - this is the amount of seconds that a user has to wait before they can gain xp from talking in the server.
