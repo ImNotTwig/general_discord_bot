@@ -1,5 +1,16 @@
 # Meww Bot
 
+Pip dependencies before you start:
+  - discord.py
+  - lyricsgenius
+  - numpy
+  - pandas
+  - reactionmenu
+  - spotipy
+  - toml
+  - urlextract
+  - yt_dlp
+
 You need a bot token to start up the bot, below will be the steps for getting one.
 
 1 - Go to https://discord.com/developers/applications and set up an application by clicking the "New Application" button at the top.
