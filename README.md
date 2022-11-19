@@ -10,6 +10,9 @@ Pip dependencies before you start:
   - toml
   - urlextract
   - yt_dlp
+  
+Other dependencies:
+  - ffmpeg
 
 You need a bot token to start up the bot, below will be the steps for getting one.
 
@@ -74,3 +77,11 @@ the prefix your bot uses, so if you have it as ~ the help command would be "~hel
   
   - cooldown_in_seconds
     - this is the amount of seconds that a user has to wait before they can gain xp from talking in the server.
+    
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+- Some Notes
+  - When playing from Spotify or Soundcloud, the bot has to first download the title/artist or link to the song, then plug it into yt-dlp
+  this makes the process very slow compared to just playing a youtube link, discord media link, or bandcamp link
+  
+  - I have been using a linux system for testing, I do not have a windows, or mac system to test this on, if you encounter issues please report them.
