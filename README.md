@@ -39,3 +39,27 @@ Steps for getting the spotify id/secret
 
 5 - When you're done with that go back to the spotify dashboard and click "Show Client Secret", copy that and paste it into the config.toml
 and you should be done with the spotify credentials
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Other Options in the Config
+
+- prefix 
+the prefix your bot uses, so if you have it as ~ the help command would be "~help" if you had it as ! it would be "!help"
+
+- [spam_settings]
+  - antispam
+  set this to true if you want to enable antispam bot-wide, you can still disable/enable it per server too.
+  
+  - spam_count
+  this is the amount of the same message a person can send in a row before they would be muted for spamming.
+ 
+- [level_system]
+  - levels_on
+  set this on to enable the level_system bot-wide, it can still be disabled/enabled per server.
+  
+  - xp_per_message
+  this is a range of two integers, a user can receive xp between the two, whenever they gain xp
+  
+  - cooldown_in_seconds
+  this is the amount of seconds that a user has to wait before they can gain xp from talking in the server.
