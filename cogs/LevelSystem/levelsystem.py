@@ -59,16 +59,22 @@ class LevelSystemCommands(commands.Cog):
 ############-XP COMMAND-#######################################################################################
 
     @commands.command(name="xp", pass_context=True, case_insensitive=True)
-    async def xp(self, ctx):
+    async def xp(self, ctx, member: discord.Member = None):
         # setting author name
         server = str(ctx.message.guild.id)
-        author = str(ctx.author.id)
+
+        if member is None:
+            author = str(ctx.author.id)
+            member = ctx.author
+        else:
+            author = str(member.id)
+
         # if author is in the levels dict already
         if server in levels.keys():
             if author in levels[server]:
                 # sending the embed
                 # title
-                embed = discord.Embed(title=f"{ctx.author.name}'s level stats")
+                embed = discord.Embed(title=f"{member.name}'s level stats")
                 # global xp that the user has until next level up
                 embed.add_field(name="Global Xp",
                                 value=levels["global"][author]['total_xp'],
@@ -96,10 +102,10 @@ class LevelSystemCommands(commands.Cog):
                 # there should be 20 boxes when the embed is sent
                 # a percentage of white and blue squares should correspond to the current_xp and total_xp - current_xp
                 embed.add_field(name=f"Progress to leveling up in {ctx.guild.name}",
-                                value=(int(current_boxes)) * ":blue_square:" +
-                                (int(boxes_left)) * ":white_large_square:",
+                                value=(int(current_boxes)) * ":blue_square:"
+                                + (int(boxes_left)) * ":white_large_square:",
                                 inline=False)
-                embed.set_thumbnail(url=ctx.author.avatar.url)
+                embed.set_thumbnail(url=member.avatar.url)
 
                 await ctx.send(embed=embed)
             # if the ~member~ is not in the levels dict already
@@ -134,8 +140,8 @@ class LevelSystemCommands(commands.Cog):
             boxes_left = xp_needed_to_lvl_up / amount_per_box
 
             embed.add_field(name="Progress Bar [level]",
-                            value=(int(current_boxes)) * ":blue_square:" +
-                            (int(boxes_left)) * ":white_large_square:",
+                            value=(int(current_boxes)) * ":blue_square:"
+                            + (int(boxes_left)) * ":white_large_square:",
                             inline=False)
             embed.set_thumbnail(url=ctx.author.avatar.url)
             await ctx.send(embed=embed)
@@ -211,7 +217,7 @@ class LevelSystemCommands(commands.Cog):
 
 ############-LEADERBOARD COMMAND-##############################################################################
 
-    @commands.command(name="leaderboard", case_insensitive=True)
+    @commands.command(name="leaderboard", aliases=["lb"], case_insensitive=True)
     async def leaderboard(self, ctx):
         server = str(ctx.message.guild.id)
         server_dict = levels[server]
@@ -267,7 +273,7 @@ Total Xp: {tempxp}""", inline=False)
 
     @commands.command(name="givexp", case_insensitive=True)
     @commands.has_permissions(manage_messages=True)
-    async def givexp(self, ctx, member: discord.Member, arg):
+    async def givexp(self, ctx, arg, member: discord.Member = None):
         try:
             amount_of_xp = int(arg)
         except ValueError:
@@ -275,7 +281,16 @@ Total Xp: {tempxp}""", inline=False)
 
         server = str(ctx.guild.id)
         author = str(member.id)
+
+        if member is None:
+            author = str(ctx.author.id)
+
+        if member.id not in levels[server]:
+            new_member(server, author)
+
         levels[server][author]['current_xp'] += amount_of_xp
+        levels[server][author]['total_xp'] += amount_of_xp
+        levels['global'][author]['total_xp'] += amount_of_xp
 
         # while the author's current_xp is greater or equal to xp_needed for level up
         while levels[server][author]['current_xp'] >= levels[server][author]['xp_needed']:

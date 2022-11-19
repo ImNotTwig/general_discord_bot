@@ -1,0 +1,48 @@
+[soundcloud:set] twig-559499225/sets/delted-zalinki-songs/s-kvS355Cj2kX: Downloading JSON metadata
+[soundcloud:set] 1248083197: Downloading tracks
+[download] Downloading playlist: deleted Zalinki songs
+[soundcloud:set] Playlist deleted Zalinki songs: Downloading 43 videos of 43
+[download] Downloading video 1 of 43
+[download] Downloading video 2 of 43
+[download] Downloading video 3 of 43
+[download] Downloading video 4 of 43
+[download] Downloading video 5 of 43
+[download] Downloading video 6 of 43
+[download] Downloading video 7 of 43
+[download] Downloading video 8 of 43
+[download] Downloading video 9 of 43
+[download] Downloading video 10 of 43
+[download] Downloading video 11 of 43
+[download] Downloading video 12 of 43
+[download] Downloading video 13 of 43
+[download] Downloading video 14 of 43
+[download] Downloading video 15 of 43
+[download] Downloading video 16 of 43
+[download] Downloading video 17 of 43
+[download] Downloading video 18 of 43
+[download] Downloading video 19 of 43
+[download] Downloading video 20 of 43
+[download] Downloading video 21 of 43
+[download] Downloading video 22 of 43
+[download] Downloading video 23 of 43
+[download] Downloading video 24 of 43
+[download] Downloading video 25 of 43
+[download] Downloading video 26 of 43
+[download] Downloading video 27 of 43
+[download] Downloading video 28 of 43
+[download] Downloading video 29 of 43
+[download] Downloading video 30 of 43
+[download] Downloading video 31 of 43
+[download] Downloading video 32 of 43
+[download] Downloading video 33 of 43
+[download] Downloading video 34 of 43
+[download] Downloading video 35 of 43
+[download] Downloading video 36 of 43
+[download] Downloading video 37 of 43
+[download] Downloading video 38 of 43
+[download] Downloading video 39 of 43
+[download] Downloading video 40 of 43
+[download] Downloading video 41 of 43
+[download] Downloading video 42 of 43
+[download] Downloading video 43 of 43
+[download] Finished downloading playlist: deleted Zalinki songs

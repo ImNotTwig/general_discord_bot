@@ -3,6 +3,8 @@ from discord.ext import commands
 import json
 from collections import OrderedDict
 import asyncio
+from datetime import datetime, timedelta
+import pandas as pd
 from config import config
 
 with open('cogs/Moderation/mute_roles.json', 'r+') as mute_role_file:
@@ -10,6 +12,9 @@ with open('cogs/Moderation/mute_roles.json', 'r+') as mute_role_file:
 
 with open('cogs/Moderation/server_word_blacklists.json', 'r') as word_blacklists:
     blacklist_dict = json.load(word_blacklists)
+
+with open('cogs/Moderation/unmute_times.json', 'r') as unmute_times:
+    unmute_times = json.load(unmute_times)
 
 user_spam_count = OrderedDict()
 
@@ -61,9 +66,10 @@ class ModerationCommands(commands.Cog):
         number_list = []
         word_list = []
 
+        if str(ctx.guild.id) not in unmute_times:
+            unmute_times[str(ctx.guild.id)] = {}
+
         if args != []:
-            print(word_list)
-            print(number_list)
             args_list = list(args[0])
             for char in args_list:
                 if char.isnumeric():
@@ -74,43 +80,67 @@ class ModerationCommands(commands.Cog):
 
             # find which time frame its in
             match word_list:
-                case 'second' | 'sec' | 'seconds' | 'secs':
+                case 'second' | 'sec' | 'seconds' | 'secs' | 's':
                     time_units = ''.join(number_list)
                     multiplier = 1
                     time_frame = "seconds"
 
-                case 'minute' | 'min' | 'minutes' | 'mins':
+                case 'minute' | 'min' | 'minutes' | 'mins' | 'm':
                     time_units = ''.join(number_list)
                     multiplier = 60
                     time_frame = "minutes"
 
-                case 'hour' | 'hours':
+                case 'hour' | 'hours' | 'h':
                     time_units = ''.join(number_list)
                     multiplier = 60 * 60
                     time_frame = "hours"
 
-                case 'day' | 'days':
+                case 'day' | 'days' | 'd':
                     time_units = ''.join(number_list)
                     multiplier = 60 * 60 * 24
                     time_frame = "days"
 
-                case 'month' | 'months':
+                case 'month' | 'months' | 'M':
                     time_units = ''.join(number_list)
                     multiplier = 60 * 60 * 24 * 30
                     time_frame = "months"
 
-                case 'year' | 'years':
+                case 'year' | 'years' | 'y':
                     time_units = ''.join(number_list)
                     multiplier = 60 * 60 * 24 * 30 * 12
                     time_frame = "years"
+
+                case 'decade' | 'decades' | 'D':
+                    time_units = ''.join(number_list)
+                    multiplier = 60 * 60 * 24 * 30 * 12 * 10
+                    time_frame = "decades"
+
+                case 'centuries' | 'century' | 'C':
+                    time_units = ''.join(number_list)
+                    multiplier = 60 * 60 * 24 * 30 * 12 * 10 * 10
+                    time_frame = "centuries"
+
                 # assume its a reason and not a time
                 case _:
                     no_time_with_reason = True
 
             if no_time_with_reason is False:
                 # check if there is a reason provided
+                if time_units == "1":
+                    if time_frame == "centuries":
+                        time_frame = "century"
+                    else:
+                        time_frame.removesuffix('s')
                 if args[1:] != []:
                     reason = args[1:]
+
+                now = datetime.now()
+                then = now + timedelta(seconds=multiplier * int(time_units))
+
+                unmute_times[str(ctx.guild.id)][str(member.id)] = str(then)
+
+                with open('cogs/Moderation/unmute_times.json', 'w') as file:
+                    json.dump(unmute_times, file, indent=4)
 
             # if theres a reason without a time provided
             if no_time_with_reason is True:                    
@@ -146,14 +176,6 @@ class ModerationCommands(commands.Cog):
             else:
                 await ctx.send(f'{member} has been muted for {time_units} {time_frame}.')
 
-        # wait for the amount provided if there was one
-        if args != []:
-            if no_time_with_reason is False:
-                print(f'{member} has been muted')
-                await asyncio.sleep(int(args[0][0]) * multiplier)
-                await member.remove_roles(mute_role)
-                print(f'{member} has been unmuted')
-
 ############-UNMUTE COMMAND-###################################################################################
 
     @commands.command(name="unmute", pass_context=True, case_insensitive=True)
@@ -175,8 +197,7 @@ class ModerationCommands(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     async def muterole(self, ctx, role: discord.Role):
 
-        if ctx.guild.id not in mute_role_dict.keys():
-            mute_role_dict[ctx.guild.id] = str(role)
+        mute_role_dict[str(ctx.guild.id)] = str(role)
 
         with open('cogs/Moderation/mute_roles.json', 'w') as file:
             json.dump(mute_role_dict, file, indent=4)
@@ -184,9 +205,37 @@ class ModerationCommands(commands.Cog):
         await ctx.send(f'Set mute role to {role}.')
         return
 
+############-UNMUTE DETECTOR-##################################################################################
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print("Starting unmute detector...")
+        # check if a person needs to be unmuted according to the timestamp in a file
+        while True:
+            await asyncio.sleep(.1)
+            for (k, v) in unmute_times.items():
+                for (member, time) in v.items():
+                    print(time)
+                    if pd.to_datetime(time) < pd.to_datetime(str(datetime.now())):
+                        print("unmuting")
+                        server = self.bot.get_guild(int(k))
+                        mute_role_name = mute_role_dict[str(server.id)]
+                        mute_role = discord.utils.get(server.roles, name=mute_role_name)
+                        user = server.get_member(int(member))
+                        await user.remove_roles(mute_role)
+                        print("{} has been unmuted".format(user.name))
+
+                        user = self.bot.get_user(int(member))
+                        print(1)
+
+                        await user.send("You have been unmuted in {}.".format(server.name))
+                        del unmute_times[str(k)][member]
+                        with open('cogs/Moderation/unmute_times.json', 'w') as file:
+                            json.dump(unmute_times, file, indent=4)
+
 ############-PURGE COMMAND-####################################################################################
 
-    @commands.command(name="purge", aliases=["clear"], case_insensitive=True)
+    @commands.command(name="purge", case_insensitive=True)
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx, arg: int):
         await ctx.channel.purge(limit=arg + 1)
@@ -229,7 +278,7 @@ class ModerationCommands(commands.Cog):
         #if message has a blacklisted word
         for black_listed_word in blacklist_dict[message.guild.id]:
             for word in words_in_message:
-                if word.startswith(black_listed_word) or word.endswith(black_listed_word) or word == black_listed_word:
+                if word in black_listed_word:
                     await message.delete()
                     await message.channel.send(f'{message.author.mention} your message contains a blacklisted word, it has been deleted.')
 

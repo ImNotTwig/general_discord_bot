@@ -52,4 +52,4 @@ if __name__ == '__main__':
     if config.level_system.levels_on is True:
         asyncio.run(bot.add_cog(LevelSystemCommands(bot)))
 
-    bot.run(config.tokens.discord_token)
+    bot.run(config.tokens.discord_token, log_handler=None)

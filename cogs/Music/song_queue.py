@@ -4,16 +4,18 @@ import yt_dlp
 
 FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn'
+    'options': '-vn -nostats -loglevel 0'
 }
 YTDLP_OPTIONS = {
-    'fragment_count': '64',
+    'F': '64',
     'extract_flat': True,
     'format': 'bestaudio/best',
     'downloader': 'aria2c',
     'skip_download': True,
-    'dump_single_json': True
+    'dump_single_json': True,
+    'quiet': True
 }
+
 
 @dataclass
 class Song:
@@ -39,114 +41,133 @@ class Queue:
         self.songs.append(song)
 
     def current(self):
-        return self.songs[self.current_pos - 1]
+        if self.len() != 0:
+            return self.songs[self.current_pos - 1]
 
     async def move_to(self, index):
         self.current_pos = index - 1
         self.voice.stop()
-        self.play()
+
+    def clear(self):
+        self.songs.clear()
+        self.voice.stop()
+
+    def validate_track_order(self):
+        a = 1
+        for i in self.songs:
+            i.number_in_queue = a
+            a += 1
 
     # play from the current posistion of the queue
     async def play(self):
-        # getting the voice channel we are connected to
-        voice = discord.utils.get(self.bot.voice_clients, guild=self.ctx.guild)
+        if self.len() != 0:
+            # getting the voice channel we are connected to
+            voice = discord.utils.get(self.bot.voice_clients, guild=self.ctx.guild)
 
-        # getting the link to stream over ffmpeg
-        with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
-            info = ydl.extract_info(self.current().url, download=False)
+            # getting the link to stream over ffmpeg
+            with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
+                info = ydl.extract_info(self.current().url, download=False)
 
-        # the source from ffmpeg to play on the bot
-        source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
+            # the source from ffmpeg to play on the bot
+            source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
 
-        # playing the music, this also calls the play next function again when its done
-        voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
+            # playing the music, this also calls the play next function again when its done
+            voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
 
-        # send a message for the music that we are now playing
-        await self.ctx.send(f"Now playing: {self.current().title}")
+            # send a message for the music that we are now playing
+            await self.ctx.send(f"Now playing: {self.current().title}")
 
-        self.voice = voice
+            self.voice = voice
+        else:
+            self.current_pos = 0
 
     # play the last song in the queue
     async def play_last(self):
-        self.current_pos = self.len()
+        if self.len() != 0:
+            self.current_pos = self.len()
 
-        # getting the voice channel we are connected to
-        voice = discord.utils.get(self.bot.voice_clients, guild=self.ctx.guild)
+            # getting the voice channel we are connected to
+            voice = discord.utils.get(self.bot.voice_clients, guild=self.ctx.guild)
 
-        paused = None
+            paused = None
 
-        if voice.is_paused() is True:
-            paused = True
+            if voice.is_paused():
+                paused = True
 
-        # getting the link to stream over ffmpeg
-        with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
-            info = ydl.extract_info(self.current().url, download=False)
+            # getting the link to stream over ffmpeg
+            with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
+                info = ydl.extract_info(self.current().url, download=False)
 
-        # the source from ffmpeg to play on the bot
-        source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
+            # the source from ffmpeg to play on the bot
+            source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
 
-        # playing the music, this also calls this function again when its done
-        voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
+            # playing the music, this also calls this function again when its done
+            voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
 
-        if paused is True:
-            voice.pause()
+            if paused is True:
+                voice.pause()
 
-        if voice.is_paused() is False:
-            # send a message for the music that we are now playing
-            await self.ctx.send(f"Now playing: {self.current().title}")
+            if voice.is_paused() is False:
+                # send a message for the music that we are now playing
+                await self.ctx.send(f"Now playing: {self.current().title}")
 
-        self.voice = voice
+            self.voice = voice
+        else:
+            self.current_pos = 0
 
     # play the last song in the queue
     async def play_next(self):
-        # incrementing the current posistion
-        # this is so we can play the *next* song
-        # afterall this function is called play_next
-        self.current_pos += 1
-        paused = False
+        if self.len() != 0:
+            # incrementing the current posistion
+            # this is so we can play the *next* song
+            # afterall this function is called play_next
+            self.current_pos += 1
+            paused = False
 
-        if self.voice.is_paused() is True:
-            paused = True
-
-        # checking if we are after the end of the queue or not 
-        if self.current_pos >= self.len() + 1:
-            # if we are not looping
-            if self.loop is False:
-                # pause the queue and pause the discord player
-                self.voice.pause()
+            if self.voice.is_paused():
                 paused = True
-                if self.voice.channel.members != 0:
-                    if self.end_of_queue is True:
-                        await self.ctx.send("The queue has reached the end. The player has paused.")
-                self.end_of_queue = True
-                # set the current posistion to the song at the end of the queue
-                # this is because when we play a song after this it will play that song
-                self.current_pos = self.len()
 
-            # if we are looping
-            if self.loop is True:
-                self.current_pos = 1
+            # checking if we are after the end of the queue or not 
+            if self.current_pos >= self.len() + 1:
+                # if we are not looping
+                if self.loop is False:
+                    # pause the queue and pause the discord player
+                    self.voice.pause()
+                    paused = True
+                    if self.voice.channel.members != 0:
+                        if self.end_of_queue is True:
+                            await self.ctx.send("The queue has reached the end. The player has paused.")
+                    self.end_of_queue = True
+                    # set the current posistion to the song at the end of the queue
+                    # this is because when we play a song after this it will play that song
+                    self.current_pos = self.len()
 
-        # getting the voice channel we are connected to
-        voice = discord.utils.get(self.bot.voice_clients, guild=self.ctx.guild)
+                # if we are looping
+                if self.loop is True:
+                    self.current_pos = 1
 
-        # getting the link to stream over ffmpeg
-        with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
-            info = ydl.extract_info(self.current().url, download=False)
+            # getting the voice channel we are connected to
+            voice = discord.utils.get(self.bot.voice_clients, guild=self.ctx.guild)
 
-        # the source from ffmpeg to play on the bot
-        source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
+            # getting the link to stream over ffmpeg
+            with yt_dlp.YoutubeDL(YTDLP_OPTIONS) as ydl:
+                info = ydl.extract_info(self.current().url, download=False)
 
-        # playing the music, this also calls this function again when its done
-        voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
+            # the source from ffmpeg to play on the bot
+            source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
 
-        if paused is True:
-            voice.pause()
+            # playing the music, this also calls this function again when its done
+            voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
 
-        # if the player is not paused
-        if paused is False:
-            # send a message for the music that we are now playing
-            await self.ctx.send(f"Now playing: {self.current().title}")
+            if paused is True:
+                voice.pause()
 
-        self.voice = voice
-        self.end_of_queue = False
+            # if the player is not paused
+            if paused is False:
+                # send a message for the music that we are now playing
+                await self.ctx.send(f"Now playing: {self.current().title}")
+
+            self.voice = voice
+            self.end_of_queue = False
+        else:
+            self.current_pos = 0
