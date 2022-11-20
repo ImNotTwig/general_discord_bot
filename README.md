@@ -58,7 +58,7 @@ Steps for getting the spotify id/secret
 Other Options in the Config
 
 - prefix 
-the prefix your bot uses, so if you have it as ~ the help command would be "~help" if you had it as ! it would be "!help"
+  - the prefix your bot uses, so if you have it as ~ the help command would be "~help" if you had it as ! it would be "!help"
 
 - [spam_settings]
   - antispam
