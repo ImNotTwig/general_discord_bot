@@ -110,15 +110,50 @@ class ModerationCommands(commands.Cog):
                     multiplier = 60 * 60 * 24 * 30 * 12
                     time_frame = "years"
 
+                # ten years
                 case 'decade' | 'decades' | 'D':
                     time_units = ''.join(number_list)
                     multiplier = 60 * 60 * 24 * 30 * 12 * 10
                     time_frame = "decades"
 
+                # hundred years
                 case 'centuries' | 'century' | 'C':
                     time_units = ''.join(number_list)
                     multiplier = 60 * 60 * 24 * 30 * 12 * 10 * 10
                     time_frame = "centuries"
+
+                # thousand years
+                case 'millenium' | 'milleniums' | 'millenia':
+                    time_units = ''.join(number_list)
+                    multiplier = 60 * 60 * 24 * 30 * 12 * 10 * 10 * 10
+                    time_frame = "millenia"
+
+                # anything under this pretty much doesnt work due to the limitation in dates
+                # however its funny to include them
+
+                # million years
+                case 'age' | 'ages':
+                    time_units = ''.joins(number_list)
+                    multiplier = 60 * 60 * 24 * 30 * 12 * 10 * 10 * 10 * 1000
+                    time_frame = "ages"
+
+                # ten million years
+                case 'epoch' | 'epochs':
+                    time_units = ''.join(number_list)
+                    multiplier = 60 * 60 * 24 * 30 * 12 * 10 * 10 * 10 * 1000 * 10
+                    time_frame = "epochs"
+
+                # hundred million years
+                case 'era' | 'eras':
+                    time_units = ''.join(number_list)
+                    multiplier = 60 * 60 * 24 * 30 * 12 * 10 * 10 * 10 * 1000 * 10 * 10
+                    time_frame = "eras"
+
+                # five-hundred million years
+                case 'eon' | 'eons':
+                    time_units = ''.join(number_list)
+                    multiplier = 60 * 60 * 24 * 30 * 12 * 10 * 10 * 10 * 1000 * 10 * 10 * 5
+                    time_frame = "eons"
 
                 # assume its a reason and not a time
                 case _:
@@ -126,11 +161,14 @@ class ModerationCommands(commands.Cog):
 
             if no_time_with_reason is False:
                 # check if there is a reason provided
-                if time_units == "1":
+                if time_units == "1" or time_units == 1:
                     if time_frame == "centuries":
                         time_frame = "century"
+                    elif time_frame == "millenia":
+                        time_frame = "millenium" 
                     else:
-                        time_frame.removesuffix('s')
+                        time_frame = time_frame.removesuffix('s')
+
                 if args[1:] != []:
                     reason = args[1:]
 
@@ -215,18 +253,14 @@ class ModerationCommands(commands.Cog):
             await asyncio.sleep(.1)
             for (k, v) in unmute_times.items():
                 for (member, time) in v.items():
-                    print(time)
                     if pd.to_datetime(time) < pd.to_datetime(str(datetime.now())):
-                        print("unmuting")
                         server = self.bot.get_guild(int(k))
                         mute_role_name = mute_role_dict[str(server.id)]
                         mute_role = discord.utils.get(server.roles, name=mute_role_name)
                         user = server.get_member(int(member))
                         await user.remove_roles(mute_role)
-                        print("{} has been unmuted".format(user.name))
 
                         user = self.bot.get_user(int(member))
-                        print(1)
 
                         await user.send("You have been unmuted in {}.".format(server.name))
                         del unmute_times[str(k)][member]
@@ -239,11 +273,6 @@ class ModerationCommands(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx, arg: int):
         await ctx.channel.purge(limit=arg + 1)
-
-        embed_to_send = discord.Embed(title=f'{arg} messages have been deleted.')
-        embed_to_send.set_footer(text=f'{ctx.message.author.mention} used {config.prefix}purge')
-
-        await ctx.send(embed=embed_to_send, delete_after=5)
 
 ############-BLACKLIST COMMAND-################################################################################
 

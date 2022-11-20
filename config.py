@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import toml
 import os
 
+
 @dataclass
 class Tokens:
     discord_token: str
@@ -29,6 +30,7 @@ class Config:
     spam_settings: SpamSettings
     level_system: LevelSystem
     prefix: str
+
 
 with open('config.toml') as config_file:
     config = toml.load(config_file)

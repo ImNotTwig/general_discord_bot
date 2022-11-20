@@ -1,9 +1,8 @@
 import discord
 from discord.ext import commands
 import asyncio
-import os
-from config import config
 
+from config import config
 from cogs.Unbound.unbound import UnboundCommands
 from cogs.Music.music import MusicCommands
 from cogs.Moderation.moderation import ModerationCommands
@@ -30,7 +29,9 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(ctx, error):
-    print(f'Error: {error}')
+    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+        missing_command = str(error).split('"')[1]
+        await ctx.reply(f"Command {missing_command} was not found.", mention_author=False)
 
 
 @bot.event

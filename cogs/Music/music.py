@@ -9,6 +9,7 @@ from lyricsgenius import Genius
 from urlextract import URLExtract
 
 from config import config
+from colors import colors
 from cogs.Music.song_queue import Queue
 from cogs.Music.song_queue import Song
 from cogs.Music.song_queue import YTDLP_OPTIONS
@@ -56,12 +57,12 @@ class MusicCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-############-PLAY COMMAND-#####################################################################################
+############-PLAYNEXT COMMAND-#################################################################################
 
-    @commands.command(name="play", aliases=["p"], case_insensitive=True)
-    async def play(self, ctx, *arg):
-
+    @commands.command(name="playnext", aliases=["pn"], case_insensitive=True)
+    async def playnext(self, ctx, *arg):
         arg = ' '.join(arg)
+        title_list = []
 
         try:
             voice_channel = ctx.author.voice.channel
@@ -94,11 +95,13 @@ class MusicCommands(commands.Cog):
             for i in spotify.playlist(playlist_id=arg)['tracks']['items']:
                 song = f"{i['track']['name']} - {i['track']['album']['artists'][0]['name']}"
                 song_list.append(song)
+                break
 
         elif arg.startswith("https://open.spotify.com/album"):
             for i in spotify.album(arg)['tracks']['items']:
                 song = f"{i['name']} - {i['artists'][0]['name']}"
                 song_list.append(song)
+                break
 
         elif arg.startswith("https://open.spotify.com/track"):
             track = spotify.track(track_id=arg)
@@ -110,22 +113,8 @@ class MusicCommands(commands.Cog):
 
             if 'entries' in info.keys():
                 for entry in info['entries']:
-                    await asyncio.sleep(.1)
-
-                    # this is the best solution I could come up with for 
-                    # getting the title fast enough for the queue
-                    # if I wanted the actual title it would require taking
-                    # ~= a second for getting each individual song and getting the title from it
-                    url_string_list = entry['url'].split('/')
-                    entry['title'] = url_string_list[4].replace('-', ' ')
-
-                    song = Song(
-                        title=entry['title'],
-                        url=entry['url'],
-                        number_in_queue=queue_dict[ctx.guild.id].len() + 1
-                    )
-
-                    queue_dict[ctx.guild.id].enqueue(song)
+                    song_list.append(entry['url'])
+                    break
 
         # handling youtube links and searches
         # also works with:
@@ -144,7 +133,8 @@ class MusicCommands(commands.Cog):
                         number_in_queue=queue_dict[ctx.guild.id].len() + 1
                     )
 
-                    queue_dict[ctx.guild.id].enqueue(song)
+                    title_list.append(entry['title'])
+                    break
 
             else:
                 song = Song(
@@ -152,10 +142,11 @@ class MusicCommands(commands.Cog):
                     url=info['webpage_url'],
                     number_in_queue=queue_dict[ctx.guild.id].len() + 1
                 )
-                queue_dict[ctx.guild.id].enqueue(song)
+                title_list.append(entry['title'])
 
         if song_list != []:
             for song in song_list:
+                await asyncio.sleep(.1)
                 info = search(song)
 
                 if 'entries' in info.keys():
@@ -169,7 +160,8 @@ class MusicCommands(commands.Cog):
                             number_in_queue=queue_dict[ctx.guild.id].len() + 1
                         )
 
-                        queue_dict[ctx.guild.id].enqueue(song)
+                        title_list.append(entry['title'])
+                        break
 
                 else:
                     song = Song(
@@ -177,7 +169,153 @@ class MusicCommands(commands.Cog):
                         url=info['webpage_url'],
                         number_in_queue=queue_dict[ctx.guild.id].len() + 1
                     )
+                    title_list.append(info['title'])
+
+                queue_place = queue_dict[ctx.guild.id].current_pos + 1
+
+                queue_dict[ctx.guild.id].songs.insert(queue_place, song)
+
+                if voice.is_playing() is True:
+                    pass
+                else:
+                    if queue_dict[ctx.guild.id].end_of_queue is True:
+                        await queue_dict[ctx.guild.id].play_last()
+                    else:
+                        await queue_dict[ctx.guild.id].play_next()
+                    queue_dict[ctx.guild.id].voice.resume()
+
+        queue_dict[ctx.guild.id].songs.insert(queue_place, song)
+
+        queue_dict[ctx.guild.id].validate_track_order()
+
+        if voice.is_playing() is True:
+            pass
+        else:
+            if queue_dict[ctx.guild.id].end_of_queue is True:
+                await queue_dict[ctx.guild.id].play_last()
+            else:
+                await queue_dict[ctx.guild.id].play_next()
+            queue_dict[ctx.guild.id].voice.resume()
+
+        await ctx.reply(f"{title_list[0]} will play next in the queue.", mention_author=False)
+
+############-PLAY COMMAND-#####################################################################################
+
+    @commands.command(name="play", aliases=["p"], case_insensitive=True)
+    async def play(self, ctx, *, arg=None):
+        title_list = []
+
+        try:
+            voice_channel = ctx.author.voice.channel
+        # if author is not in a voice channel this will run
+        except AttributeError:
+            await ctx.send("You are not connected to a voice channel.")
+            return
+
+        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
+
+        if not voice:
+            await voice_channel.connect()
+            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
+
+        if ctx.guild.id not in queue_dict:
+            queue_dict[ctx.guild.id] = Queue(
+                songs=[],
+                current_pos=0,
+                loop=False,
+                voice=voice,
+                bot=self.bot,
+                ctx=ctx
+            )
+
+        if arg is None or arg.isspace():
+            if voice.is_paused():
+                if not voice.is_playing():
+                    voice.resume()
+
+                await ctx.send("The queue has been un-paused.")
+            else:
+                await ctx.send("The queue is not paused.")
+            return
+
+        song_list = []
+        if arg.startswith("https://open.spotify.com/playlist"):
+            for i in spotify.playlist(playlist_id=arg)['tracks']['items']:
+                song = f"{i['track']['name']} - {i['track']['album']['artists'][0]['name']}"
+                song_list.append(song)
+
+        elif arg.startswith("https://open.spotify.com/album"):
+            for i in spotify.album(arg)['tracks']['items']:
+                song = f"{i['name']} - {i['artists'][0]['name']}"
+                song_list.append(song)
+
+        elif arg.startswith("https://open.spotify.com/track"):
+            track = spotify.track(track_id=arg)
+            song = f"{track['name']} - {track['album']['artists'][0]['name']}"
+            song_list.append(song)
+
+        elif arg.startswith("https://soundcloud"):
+            info = search(arg)
+
+            if 'entries' in info.keys():
+                for entry in info['entries']:
+                    song_list.append(entry['url'])
+
+        # handling youtube links and searches
+        # also works with:
+        # discord media audio,
+        # bandcamp audio
+        else:
+            info = search(arg) 
+            if 'entries' in info.keys():
+                for entry in info['entries']:
+                    await asyncio.sleep(.1)
+                    song = Song(
+                        title=entry['title'],
+                        url=entry['url'].removesuffix('#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
+                        number_in_queue=queue_dict[ctx.guild.id].len() + 1
+                    )
                     queue_dict[ctx.guild.id].enqueue(song)
+                    title_list.append(entry['title'])
+
+            else:
+                song = Song(
+                    title=info['title'],
+                    url=info['webpage_url'].removesuffix('#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
+                    number_in_queue=queue_dict[ctx.guild.id].len() + 1
+                )
+                queue_dict[ctx.guild.id].enqueue(song)
+                title_list.append(info['title'])
+
+        if song_list != []:
+            for song in song_list:
+                await asyncio.sleep(.1)
+                info = search(song)
+
+                if 'entries' in info.keys():
+                    for entry in info['entries']:
+                        await asyncio.sleep(.1)
+
+                        song = Song(
+                            title=entry['title'],
+                            url=entry['url'].removesuffix('#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
+                            number_in_queue=queue_dict[ctx.guild.id].len() + 1
+                        )
+
+                        queue_dict[ctx.guild.id].enqueue(song)
+                        title_list.append(entry['title'])
+
+                else:
+                    song = Song(
+                        title=info['title'],
+                        url=info['webpage_url'].removesuffix('#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
+                        number_in_queue=queue_dict[ctx.guild.id].len() + 1
+                    )
+                    queue_dict[ctx.guild.id].enqueue(song)
+                    title_list.append(info['title'])
+
                 if voice.is_playing() is True:
                     pass
                 else:
@@ -195,6 +333,17 @@ class MusicCommands(commands.Cog):
             else:
                 await queue_dict[ctx.guild.id].play_next()
             queue_dict[ctx.guild.id].voice.resume()
+
+        embed_desc = '\n'.join(
+            f'{x}'
+            for x in title_list)
+
+        embed_to_send = discord.Embed(
+            title="Songs Added to Queue",
+            description=embed_desc,
+            color=colors.blurple
+        )
+        await ctx.reply(embed=embed_to_send, mention_author=False)
 
 ############-QUEUE COMMAND-####################################################################################
 
@@ -334,7 +483,6 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
         await ctx.channel.send("Skipped the current song.")
 
         voice.stop()
-        await queue_dict[ctx.guild.id].play_next()
 
 ############-GOTO COMMAND-#####################################################################################
 
@@ -356,7 +504,7 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
             voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
             await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
 
-        await queue_dict[ctx.guild.id].move_to(arg)
+        queue_dict[ctx.guild.id].move_to(arg)
 
         await ctx.channel.send(f"Skipped to {arg} in queue.")
 

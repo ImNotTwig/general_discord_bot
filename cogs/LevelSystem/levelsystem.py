@@ -102,8 +102,7 @@ class LevelSystemCommands(commands.Cog):
                 # there should be 20 boxes when the embed is sent
                 # a percentage of white and blue squares should correspond to the current_xp and total_xp - current_xp
                 embed.add_field(name=f"Progress to leveling up in {ctx.guild.name}",
-                                value=(int(current_boxes)) * ":blue_square:"
-                                + (int(boxes_left)) * ":white_large_square:",
+                                value=(int(current_boxes)) * ":blue_square:" + (int(boxes_left)) * ":white_large_square:",
                                 inline=False)
                 embed.set_thumbnail(url=member.avatar.url)
 
@@ -140,8 +139,7 @@ class LevelSystemCommands(commands.Cog):
             boxes_left = xp_needed_to_lvl_up / amount_per_box
 
             embed.add_field(name="Progress Bar [level]",
-                            value=(int(current_boxes)) * ":blue_square:"
-                            + (int(boxes_left)) * ":white_large_square:",
+                            value=(int(current_boxes)) * ":blue_square:" + (int(boxes_left)) * ":white_large_square:",
                             inline=False)
             embed.set_thumbnail(url=ctx.author.avatar.url)
             await ctx.send(embed=embed)

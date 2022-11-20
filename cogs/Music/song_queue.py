@@ -7,7 +7,7 @@ FFMPEG_OPTIONS = {
     'options': '-vn -nostats -loglevel 0'
 }
 YTDLP_OPTIONS = {
-    'F': '64',
+    'concurrent_fragments': '64',
     'extract_flat': True,
     'format': 'bestaudio/best',
     'downloader': 'aria2c',
@@ -31,7 +31,7 @@ class Queue:
     loop: bool
     voice: object
     bot: object
-    ctx: object
+    ctx: discord.ext.commands.Context
     end_of_queue: bool = False
 
     def len(self):
@@ -44,7 +44,7 @@ class Queue:
         if self.len() != 0:
             return self.songs[self.current_pos - 1]
 
-    async def move_to(self, index):
+    def move_to(self, index):
         self.current_pos = index - 1
         self.voice.stop()
 
@@ -72,7 +72,10 @@ class Queue:
             source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
 
             # playing the music, this also calls the play next function again when its done
-            voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
+            try:
+                voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
+            except discord.errors.ClientException:
+                print("Not connected to voice. Exiting.")
 
             # send a message for the music that we are now playing
             await self.ctx.send(f"Now playing: {self.current().title}")
@@ -102,7 +105,10 @@ class Queue:
             source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
 
             # playing the music, this also calls this function again when its done
-            voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
+            try:
+                voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
+            except discord.errors.ClientException:
+                print("Not connected to voice. Exiting.")
 
             if paused is True:
                 voice.pause()
@@ -157,7 +163,10 @@ class Queue:
             source = await discord.FFmpegOpusAudio.from_probe(info['url'], **FFMPEG_OPTIONS)
 
             # playing the music, this also calls this function again when its done
-            voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
+            try:
+                voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
+            except discord.errors.ClientException:
+                print("Not connected to voice. Exiting.")
 
             if paused is True:
                 voice.pause()
