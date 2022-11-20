@@ -13,6 +13,7 @@ Pip dependencies before you start:
   
 Other dependencies:
   - ffmpeg
+  - Python (obviously, more specifically Python3.10 or later)
 
 You need a bot token to start up the bot, below will be the steps for getting one.
 
