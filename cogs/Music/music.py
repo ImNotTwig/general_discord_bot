@@ -54,6 +54,13 @@ def search(arg):
 
 
 def get_songs(arg, ctx):
+    """
+    This function is to be used to check if the arg is a spotify or soundcloud link
+
+    if that's the case then we will return a list of every song in the playlist/album
+
+    otherwise we return an empty list.
+    """
     title_list = []
     song_list = []
     if arg.startswith("https://open.spotify.com/playlist"):
@@ -107,6 +114,14 @@ class MusicCommands(commands.Cog):
 
     @commands.command(name="playnext", aliases=["pn"], case_insensitive=True)
     async def playnext(self, ctx, *arg):
+        """
+        This command adds a song to the next position in queue
+
+        it will not work when the shuffle is enabled because it 
+
+        would add the song to the next number in queue but it would not play it next 
+        """
+
         arg = ' '.join(arg)
         title_list = []
 
@@ -117,6 +132,10 @@ class MusicCommands(commands.Cog):
 
         if ctx.guild.id not in queue_dict:
             queue_dict[ctx.guild.id] = Queue(voice=voice, bot=self.bot, ctx=ctx, songs=[], already_played_tracks=[])
+
+        if queue_dict[ctx.guild.id].shuffle:
+            await ctx.channel.send("You can not use this command when shuffle is enabled.")
+            return
 
         song_list, title_list = get_songs(arg, ctx)
 
@@ -180,6 +199,18 @@ class MusicCommands(commands.Cog):
 
     @commands.command(name="play", aliases=["p"], case_insensitive=True)
     async def play(self, ctx, *, arg=None):
+        """
+        This command, given a song/playlist/album will do one of two things:
+
+            if given a spotify or soundcloud link, will get all the urls or the songs in the playlist if soundcloud,
+
+            or get the title and artist of every song in the playlist if spotify, then search yt-dlp for every song individually.
+
+            otherwise it will get every title and url and add it to the queue it will then put it into yt-dlp and add all the songs at once.
+
+        If no argument was given then it will simply check if the player is paused and if so, will unpause it.
+        """
+
         title_list = []
 
         voice = await get_voice(ctx, self.bot)
@@ -268,6 +299,13 @@ class MusicCommands(commands.Cog):
 
     @commands.command(name="queue", aliases=["q"], case_insensitive=True)
     async def queue(self, ctx):
+        """
+        This command simply returns a list of the songs in the queue with their respective number in queue.
+
+        it does not show the song that will play next when shuffle is enabled.
+
+        if the song is the current playing song it will have a -> next to it.
+        """
 
         embed_list = []
 
@@ -294,6 +332,9 @@ class MusicCommands(commands.Cog):
 
     @commands.command(name="clear")
     async def clear(self, ctx):
+        """
+        This command clears the queue and stops the currently playing song. Yes that is all.
+        """
         voice = await get_voice(ctx, self.bot)
 
         if voice:
@@ -307,6 +348,11 @@ class MusicCommands(commands.Cog):
 
     @commands.command(name="nowplaying", aliases=["np"], case_insensitive=True)
     async def nowplaying(self, ctx):
+        """
+        This command gives the title and the location in queue of the currently playing song.
+
+        Maybe in the future I will have updated it to show how long the track is and how far we are into it.
+        """
 
         embed_to_send = discord.Embed(
             title="Now playing",
@@ -320,6 +366,9 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
     @commands.command(name="pause", case_insensitive=True)
     async def pause(self, ctx):
+        """
+        This command paused the queue if the queue is not paused.
+        """
 
         voice = await get_voice(ctx, self.bot)
         if voice:
@@ -335,6 +384,9 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
     @commands.command(name="unpause", aliases=["resume"], case_insensitive=True)
     async def unpause(self, ctx):
+        """
+        This command resumes the queue if the queue is paused.
+        """
         voice = await get_voice(ctx, self.bot)
         if voice:
             voice.resume()
@@ -346,6 +398,11 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
     @commands.command(name="next", aliases=["skip"], case_insensitive=True)
     async def next(self, ctx):
+        """
+        This command skips to the next song in the queue
+
+        it also works when the shuffle is enabled.
+        """
         voice = await get_voice(ctx, self.bot)
         if voice:
             voice.stop()
@@ -357,6 +414,11 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
     @commands.command(name="goto", aliases=["jumpto"], case_insensitive=True)
     async def goto(self, ctx, arg: int):
+        """
+        This command will go to the specified song in the queue.
+
+        Again that is all.
+        """
         voice = await get_voice(ctx, self.bot)
 
         if voice:
@@ -369,6 +431,11 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
     @commands.command(name="leave", aliases=["fuckoff", "disconnect", "quit", "stop"], case_insensitive=True)
     async def leave(self, ctx):
+        """
+        Another simple command. 
+
+        This one makes the bot clear the queue and leave the voice channel.
+        """
         voice = await get_voice(ctx, self.bot)
         await voice.disconnect()
         del queue_dict[ctx.guild.id]
@@ -378,6 +445,11 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
     @commands.command(name="remove", case_insensitive=True)
     async def remove(self, ctx, arg: int):
+        """
+        This command removes a specified song in the queue.
+
+        it does this by using an index specified by the user.
+        """
         voice = await get_voice(ctx, self.bot)
         if voice:
             if arg == queue_dict[ctx.guild.id].current().number_in_queue:
@@ -398,6 +470,11 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
     @commands.command(name="loop", case_insensitive=True)
     async def loop(self, ctx):
+        """
+        This command turns the loop on for the queue if off.
+
+        It will turn the loop off it is on.
+        """
         voice = await get_voice(ctx, self.bot)
         if voice:
             if queue_dict[ctx.guild.id].loop is False:
@@ -413,6 +490,11 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
     @commands.command(name="shuffle", case_insensitive=True)
     async def shuffle(self, ctx):
+        """
+        This command will turn the shuffle on if it is off.
+
+        it will turn it off, if it is on.
+        """
         voice = await get_voice(ctx, self.bot)
         if voice:
             if queue_dict[ctx.guild.id].shuffle is False:
@@ -423,3 +505,31 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
                 await ctx.channel.send("Turned shuffle off.")
         else:
             await ctx.channel.send("You are not in a voice channel.")
+
+############-LYRICS COMMAND-###################################################################################
+
+    @commands.command(name='lyrics', aliases=['lyric'], case_insensitive=True)
+    async def lyrics(self, ctx, *, args=None):
+        """
+        This command will show the lyrics to the currently playing song if no argument is given
+
+        if an argument is given it will search for the lyrics of the argument.
+
+        It uses the Genius api to do this.
+        """
+        if args is None:
+            if queue_dict[ctx.guild.id]:
+                args = queue_dict[ctx.guild.id].current().title
+            else:
+                await ctx.channel.send("No song is playing and no title was given.")
+
+        args = ' '.join(args)
+        songs = genius.search_songs(args)['hits']
+        song = genius.search_song(song_id=songs[0]['result']['id'], artist=songs[0]['result']['artist_names'])
+
+        embed_to_send = discord.Embed(
+            title=songs[0]['result']['title'],
+            description=song.lyrics.removesuffix('You might also like')
+        )
+
+        await ctx.send(embed=embed_to_send)

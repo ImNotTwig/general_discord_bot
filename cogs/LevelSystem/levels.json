@@ -100,22 +100,22 @@
     "1041572826907422850": {
         "389202953862512641": {
             "level": 9,
-            "total_xp": 3208,
-            "current_xp": 328,
+            "total_xp": 3266,
+            "current_xp": 386,
             "xp_needed": 605,
             "can_gain_xp": true
         },
         "275162810290274304": {
             "level": 19,
-            "total_xp": 11842,
-            "current_xp": 537,
+            "total_xp": 12230,
+            "current_xp": 925,
             "xp_needed": 1135,
             "can_gain_xp": true
         },
         "978084622757937223": {
             "level": 18,
-            "total_xp": 10767,
-            "current_xp": 542,
+            "total_xp": 10831,
+            "current_xp": 606,
             "xp_needed": 1080,
             "can_gain_xp": true
         }

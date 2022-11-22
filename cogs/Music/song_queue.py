@@ -1,5 +1,5 @@
 import discord
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import yt_dlp
 import random
 
@@ -74,35 +74,38 @@ class Queue:
             if self.voice.is_paused():
                 self.voice.resume()
 
-    async def change_pos_shuffle(self):
-        if self.len() >= len(self.already_played_tracks):
-            self.current_pos = random.randint(1, self.len())
-
-            while self.current_pos in self.already_played_tracks:
-
+    async def change_pos(self):
+        if self.shuffle is True:
+            if self.len() >= len(self.already_played_tracks):
                 self.current_pos = random.randint(1, self.len())
 
-                if self.len() == len(self.already_played_tracks):
-                    if self.loop is False:
-                        self.current_pos = self.len() + 1
-                        self.end_of_queue = True
-                        self.shuffle = False
-                        self.already_played_tracks.clear()
-                        await self.ctx.send("Every song has been played, so shuffle has been turned off.")
+                while self.current_pos in self.already_played_tracks:
 
-            self.already_played_tracks.append(self.current_pos)
+                    self.current_pos = random.randint(1, self.len())
 
-            already_played_checker = []
-            for i in range(1, self.len()):
-                if i in self.already_played_tracks:
-                    already_played_checker.append(i)
+                    if self.len() == len(self.already_played_tracks):
+                        if self.loop is False:
+                            self.current_pos = self.len() + 1
+                            self.end_of_queue = True
+                            self.shuffle = False
+                            self.already_played_tracks.clear()
+                            await self.ctx.send("Every song has been played, so shuffle has been turned off.")
 
-            if len(already_played_checker) == self.len():
-                self.already_played_tracks.clear()
-                self.current_pos = self.len() + 1
-                self.shuffle = False
-                self.end_of_queue = True
-                await self.ctx.send("Every song has been played, so shuffle has been turned off.")
+                self.already_played_tracks.append(self.current_pos)
+
+                already_played_checker = []
+                for i in range(1, self.len()):
+                    if i in self.already_played_tracks:
+                        already_played_checker.append(i)
+
+                if len(already_played_checker) == self.len():
+                    self.already_played_tracks.clear()
+                    self.current_pos = self.len() + 1
+                    self.shuffle = False
+                    self.end_of_queue = True
+                    await self.ctx.send("Every song has been played, so shuffle has been turned off.")
+        else:
+            self.current_pos += 1
 
     # play from the current posistion of the queue
 
@@ -122,7 +125,7 @@ class Queue:
             try:
                 voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
             except (discord.errors.ClientException, AttributeError):
-                print("Not connected to voice. Exiting.")
+                pass
 
             # send a message for the music that we are now playing
             await self.ctx.send(f"Now playing: {self.current().title}")
@@ -155,13 +158,13 @@ class Queue:
             try:
                 voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
             except (discord.errors.ClientException, AttributeError):
-                print("Not connected to voice. Exiting.")
+                pass
 
             if paused is True:
                 try:
                     voice.pause()
                 except AttributeError:
-                    print("Not connected to voice, can not pause.")
+                    pass
 
             if voice.is_paused() is False or self.end_of_queue is False:
                 # send a message for the music that we are now playing
@@ -177,15 +180,11 @@ class Queue:
             # incrementing the current posistion
             # this is so we can play the *next* song
             # afterall this function is called play_next
-            if self.shuffle is True:
-                await self.change_pos_shuffle()
-            else:
-                self.current_pos += 1
+            await self.change_pos()
 
             paused = False
 
-            if self.voice.is_paused():
-                paused = True
+            paused = self.voice.is_paused()
 
             # checking if we are after the end of the queue or not 
             if self.current_pos >= self.len() + 1:
@@ -194,9 +193,8 @@ class Queue:
                     # pause the queue and pause the discord player
                     self.voice.pause()
                     paused = True
-                    if self.voice.channel.members != 0:
-                        if self.end_of_queue is True:
-                            await self.ctx.send("The queue has reached the end. The player has paused.")
+                    if self.end_of_queue is True and self.voice.channel.members != 0:
+                        await self.ctx.send("The queue has reached the end. The player has paused.")
                     self.end_of_queue = True
                     # set the current posistion to the song at the end of the queue
                     # this is because when we play a song after this it will play that song
@@ -220,20 +218,20 @@ class Queue:
             try:
                 voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
             except (discord.errors.ClientException, AttributeError):
-                print("Not connected to voice. Exiting.")
+                pass
 
             if paused is True:
                 try:
                     voice.pause()
                 except AttributeError:
-                    print("Not connected to voice, can not pause.")
+                    pass
 
             if paused is False or self.end_of_queue is False and self.voice.channel.members != 0:
                 # send a message for the music that we are now playing
                 try:
                     await self.ctx.send(f"Now playing: {self.current().title}")
                 except RuntimeError:
-                    print("The connection was closed cannot send message.")
+                    pass
 
             self.voice = voice
             self.end_of_queue = False
