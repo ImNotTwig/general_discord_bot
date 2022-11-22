@@ -1,6 +1,7 @@
 import discord
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import yt_dlp
+import random
 
 FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
@@ -26,13 +27,17 @@ class Song:
 
 @dataclass
 class Queue:
-    songs: list
-    current_pos: int
-    loop: bool
     voice: discord.VoiceState
     bot: discord.ext.commands.Bot
     ctx: discord.ext.commands.Context
+    songs: list
+    # this is for the shuffle so we dont play the same song
+    # again until its done playing all the songs
+    already_played_tracks: list
+    current_pos: int = 0
     end_of_queue: bool = False
+    shuffle: bool = False
+    loop: bool = False
 
     def len(self):
         return len(self.songs)
@@ -66,9 +71,41 @@ class Queue:
                 await self.play_last()
             else:
                 await self.play_next()
-            self.voice.resume()
+            if self.voice.is_paused():
+                self.voice.resume()
+
+    async def change_pos_shuffle(self):
+        if self.len() >= len(self.already_played_tracks):
+            self.current_pos = random.randint(1, self.len())
+
+            while self.current_pos in self.already_played_tracks:
+
+                self.current_pos = random.randint(1, self.len())
+
+                if self.len() == len(self.already_played_tracks):
+                    if self.loop is False:
+                        self.current_pos = self.len() + 1
+                        self.end_of_queue = True
+                        self.shuffle = False
+                        self.already_played_tracks.clear()
+                        await self.ctx.send("Every song has been played, so shuffle has been turned off.")
+
+            self.already_played_tracks.append(self.current_pos)
+
+            already_played_checker = []
+            for i in range(1, self.len()):
+                if i in self.already_played_tracks:
+                    already_played_checker.append(i)
+
+            if len(already_played_checker) == self.len():
+                self.already_played_tracks.clear()
+                self.current_pos = self.len() + 1
+                self.shuffle = False
+                self.end_of_queue = True
+                await self.ctx.send("Every song has been played, so shuffle has been turned off.")
 
     # play from the current posistion of the queue
+
     async def play(self):
         if self.len() != 0:
             # getting the voice channel we are connected to
@@ -140,7 +177,11 @@ class Queue:
             # incrementing the current posistion
             # this is so we can play the *next* song
             # afterall this function is called play_next
-            self.current_pos += 1
+            if self.shuffle is True:
+                await self.change_pos_shuffle()
+            else:
+                self.current_pos += 1
+
             paused = False
 
             if self.voice.is_paused():

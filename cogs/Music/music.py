@@ -53,8 +53,9 @@ def search(arg):
     return info
 
 
-def get_songs(arg, song_list, ctx):
+def get_songs(arg, ctx):
     title_list = []
+    song_list = []
     if arg.startswith("https://open.spotify.com/playlist"):
         for i in spotify.playlist(playlist_id=arg)['tracks']['items']:
             song = f"{i['track']['name']} - {i['track']['album']['artists'][0]['name']}"
@@ -115,17 +116,9 @@ class MusicCommands(commands.Cog):
             return
 
         if ctx.guild.id not in queue_dict:
-            queue_dict[ctx.guild.id] = Queue(
-                songs=[],
-                current_pos=0,
-                loop=False,
-                voice=voice,
-                bot=self.bot,
-                ctx=ctx
-            )
+            queue_dict[ctx.guild.id] = Queue(voice=voice, bot=self.bot, ctx=ctx, songs=[], already_played_tracks=[])
 
-        song_list = []
-        song_list, title_list = get_songs(arg, song_list, ctx)
+        song_list, title_list = get_songs(arg, ctx)
 
         if song_list == []:
             info = search(arg) 
@@ -195,14 +188,7 @@ class MusicCommands(commands.Cog):
             return
 
         if ctx.guild.id not in queue_dict:
-            queue_dict[ctx.guild.id] = Queue(
-                songs=[],
-                current_pos=0,
-                loop=False,
-                voice=voice,
-                bot=self.bot,
-                ctx=ctx
-            )
+            queue_dict[ctx.guild.id] = Queue(voice=voice, bot=self.bot, ctx=ctx, songs=[], already_played_tracks=[])
 
         if arg is None or arg.isspace():
             if voice.is_paused():
@@ -212,8 +198,7 @@ class MusicCommands(commands.Cog):
                 await ctx.send("The queue is not paused.")
             return
 
-        song_list = []
-        song_list, title_list = get_songs(arg, song_list, ctx)
+        song_list, title_list = get_songs(arg, ctx)
 
         if song_list == []:
             info = search(arg) 
@@ -406,5 +391,35 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
 
             queue_dict[ctx.guild.id].validate_track_order()    
             await ctx.channel.send(f"Removed {removed_song.title} from the queue.")
+        else:
+            await ctx.channel.send("You are not in a voice channel.")
+
+############-LOOP COMMAND-#####################################################################################
+
+    @commands.command(name="loop", case_insensitive=True)
+    async def loop(self, ctx):
+        voice = await get_voice(ctx, self.bot)
+        if voice:
+            if queue_dict[ctx.guild.id].loop is False:
+                queue_dict[ctx.guild.id].loop = True
+                await ctx.channel.send("Turned the loop on.")
+            else:
+                queue_dict[ctx.guil.did].loop = False
+                await ctx.channel.send("Turned the loop off.")
+        else:
+            await ctx.channel.send("You are not in a voice channel.")
+
+############-SHUFFLE COMMAND-##################################################################################
+
+    @commands.command(name="shuffle", case_insensitive=True)
+    async def shuffle(self, ctx):
+        voice = await get_voice(ctx, self.bot)
+        if voice:
+            if queue_dict[ctx.guild.id].shuffle is False:
+                queue_dict[ctx.guild.id].shuffle = True
+                await ctx.channel.send("Turned shuffle on.")
+            else:
+                queue_dict[ctx.guil.id].shuffle = False
+                await ctx.channel.send("Turned shuffle off.")
         else:
             await ctx.channel.send("You are not in a voice channel.")
