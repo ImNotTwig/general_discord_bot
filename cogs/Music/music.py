@@ -53,6 +53,51 @@ def search(arg):
     return info
 
 
+def get_songs(arg, song_list, ctx):
+    title_list = []
+    if arg.startswith("https://open.spotify.com/playlist"):
+        for i in spotify.playlist(playlist_id=arg)['tracks']['items']:
+            song = f"{i['track']['name']} - {i['track']['album']['artists'][0]['name']}"
+            song_list.append(song)
+
+    elif arg.startswith("https://open.spotify.com/album"):
+        for i in spotify.album(arg)['tracks']['items']:
+            song = f"{i['name']} - {i['artists'][0]['name']}"
+            song_list.append(song)
+
+    elif arg.startswith("https://open.spotify.com/track"):
+        track = spotify.track(track_id=arg)
+        song = f"{track['name']} - {track['album']['artists'][0]['name']}"
+        song_list.append(song)
+
+    elif arg.startswith("https://soundcloud"):
+        info = search(arg)
+
+        if 'entries' in info.keys():
+            for entry in info['entries']:
+                song_list.append(entry['url'])
+
+    return (song_list, title_list)
+
+
+async def get_voice(ctx, bot):
+    try:
+        voice_channel = ctx.author.voice.channel
+    # if author is not in a voice channel this will run
+    except AttributeError:
+        return None
+
+    voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+    await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
+
+    if not voice:
+        await voice_channel.connect()
+        voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
+
+    return voice
+
+
 class MusicCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -64,21 +109,10 @@ class MusicCommands(commands.Cog):
         arg = ' '.join(arg)
         title_list = []
 
-        try:
-            voice_channel = ctx.author.voice.channel
-        # if author is not in a voice channel this will run
-        except AttributeError as e:
-            print(e)
-            await ctx.send("You are not connected to a voice channel.")
-            return
-
-        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
+        voice = await get_voice(ctx, self.bot)
         if not voice:
-            await voice_channel.connect()
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
+            await ctx.channel.send("You are not in a voice channel.")
+            return
 
         if ctx.guild.id not in queue_dict:
             queue_dict[ctx.guild.id] = Queue(
@@ -91,36 +125,9 @@ class MusicCommands(commands.Cog):
             )
 
         song_list = []
-        if arg.startswith("https://open.spotify.com/playlist"):
-            for i in spotify.playlist(playlist_id=arg)['tracks']['items']:
-                song = f"{i['track']['name']} - {i['track']['album']['artists'][0]['name']}"
-                song_list.append(song)
-                break
+        song_list, title_list = get_songs(arg, song_list, ctx)
 
-        elif arg.startswith("https://open.spotify.com/album"):
-            for i in spotify.album(arg)['tracks']['items']:
-                song = f"{i['name']} - {i['artists'][0]['name']}"
-                song_list.append(song)
-                break
-
-        elif arg.startswith("https://open.spotify.com/track"):
-            track = spotify.track(track_id=arg)
-            song = f"{track['name']} - {track['album']['artists'][0]['name']}"
-            song_list.append(song)
-
-        elif arg.startswith("https://soundcloud"):
-            info = search(arg)
-
-            if 'entries' in info.keys():
-                for entry in info['entries']:
-                    song_list.append(entry['url'])
-                    break
-
-        # handling youtube links and searches
-        # also works with:
-        # discord media audio,
-        # bandcamp audio
-        else:
+        if song_list == []:
             info = search(arg) 
             if 'entries' in info.keys():
                 for entry in info['entries']:
@@ -128,8 +135,31 @@ class MusicCommands(commands.Cog):
 
                     song = Song(
                         title=entry['title'],
-                        url=entry['url'].removesuffix(
-                            '#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
+                        url=entry['url'].removesuffix('#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
+                        number_in_queue=queue_dict[ctx.guild.id].len() + 1
+                    )
+                    title_list.append(entry['title'])
+                    break
+
+            else:
+                song = Song(
+                    title=info['title'],
+                    url=info['webpage_url'],
+                    number_in_queue=queue_dict[ctx.guild.id].len() + 1
+                )
+                title_list.append(entry['title'])
+
+        for song in song_list:
+            await asyncio.sleep(.1)
+            info = search(song)
+
+            if 'entries' in info.keys():
+                for entry in info['entries']:
+                    await asyncio.sleep(.1)
+
+                    song = Song(
+                        title=entry['title'],
+                        url=entry['url'].removesuffix('#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
                         number_in_queue=queue_dict[ctx.guild.id].len() + 1
                     )
 
@@ -142,60 +172,14 @@ class MusicCommands(commands.Cog):
                     url=info['webpage_url'],
                     number_in_queue=queue_dict[ctx.guild.id].len() + 1
                 )
-                title_list.append(entry['title'])
+                title_list.append(info['title'])
+            break
 
-        if song_list != []:
-            for song in song_list:
-                await asyncio.sleep(.1)
-                info = search(song)
-
-                if 'entries' in info.keys():
-                    for entry in info['entries']:
-                        await asyncio.sleep(.1)
-
-                        song = Song(
-                            title=entry['title'],
-                            url=entry['url'].removesuffix(
-                                '#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
-                            number_in_queue=queue_dict[ctx.guild.id].len() + 1
-                        )
-
-                        title_list.append(entry['title'])
-                        break
-
-                else:
-                    song = Song(
-                        title=info['title'],
-                        url=info['webpage_url'],
-                        number_in_queue=queue_dict[ctx.guild.id].len() + 1
-                    )
-                    title_list.append(info['title'])
-
-                queue_place = queue_dict[ctx.guild.id].current_pos + 1
-
-                queue_dict[ctx.guild.id].songs.insert(queue_place, song)
-
-                if voice.is_playing() is True:
-                    pass
-                else:
-                    if queue_dict[ctx.guild.id].end_of_queue is True:
-                        await queue_dict[ctx.guild.id].play_last()
-                    else:
-                        await queue_dict[ctx.guild.id].play_next()
-                    queue_dict[ctx.guild.id].voice.resume()
+        queue_place = queue_dict[ctx.guild.id].current_pos + 1
 
         queue_dict[ctx.guild.id].songs.insert(queue_place, song)
-
         queue_dict[ctx.guild.id].validate_track_order()
-
-        if voice.is_playing() is True:
-            pass
-        else:
-            if queue_dict[ctx.guild.id].end_of_queue is True:
-                await queue_dict[ctx.guild.id].play_last()
-            else:
-                await queue_dict[ctx.guild.id].play_next()
-            queue_dict[ctx.guild.id].voice.resume()
+        await queue_dict[ctx.guild.id].check_if_playing()
 
         await ctx.reply(f"{title_list[0]} will play next in the queue.", mention_author=False)
 
@@ -205,20 +189,10 @@ class MusicCommands(commands.Cog):
     async def play(self, ctx, *, arg=None):
         title_list = []
 
-        try:
-            voice_channel = ctx.author.voice.channel
-        # if author is not in a voice channel this will run
-        except AttributeError:
-            await ctx.send("You are not connected to a voice channel.")
-            return
-
-        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
+        voice = await get_voice(ctx, self.bot)
         if not voice:
-            await voice_channel.connect()
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
+            await ctx.channel.send("You are not in a voice channel.")
+            return
 
         if ctx.guild.id not in queue_dict:
             queue_dict[ctx.guild.id] = Queue(
@@ -232,44 +206,18 @@ class MusicCommands(commands.Cog):
 
         if arg is None or arg.isspace():
             if voice.is_paused():
-                if not voice.is_playing():
-                    voice.resume()
-
+                voice.resume()
                 await ctx.send("The queue has been un-paused.")
             else:
                 await ctx.send("The queue is not paused.")
             return
 
         song_list = []
-        if arg.startswith("https://open.spotify.com/playlist"):
-            for i in spotify.playlist(playlist_id=arg)['tracks']['items']:
-                song = f"{i['track']['name']} - {i['track']['album']['artists'][0]['name']}"
-                song_list.append(song)
+        song_list, title_list = get_songs(arg, song_list, ctx)
 
-        elif arg.startswith("https://open.spotify.com/album"):
-            for i in spotify.album(arg)['tracks']['items']:
-                song = f"{i['name']} - {i['artists'][0]['name']}"
-                song_list.append(song)
-
-        elif arg.startswith("https://open.spotify.com/track"):
-            track = spotify.track(track_id=arg)
-            song = f"{track['name']} - {track['album']['artists'][0]['name']}"
-            song_list.append(song)
-
-        elif arg.startswith("https://soundcloud"):
-            info = search(arg)
-
-            if 'entries' in info.keys():
-                for entry in info['entries']:
-                    song_list.append(entry['url'])
-
-        # handling youtube links and searches
-        # also works with:
-        # discord media audio,
-        # bandcamp audio
-        else:
+        if song_list == []:
             info = search(arg) 
-            if 'entries' in info.keys():
+            try:
                 for entry in info['entries']:
                     await asyncio.sleep(.1)
                     song = Song(
@@ -280,7 +228,7 @@ class MusicCommands(commands.Cog):
                     queue_dict[ctx.guild.id].enqueue(song)
                     title_list.append(entry['title'])
 
-            else:
+            except KeyError:
                 song = Song(
                     title=info['title'],
                     url=info['webpage_url'].removesuffix('#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
@@ -289,12 +237,12 @@ class MusicCommands(commands.Cog):
                 queue_dict[ctx.guild.id].enqueue(song)
                 title_list.append(info['title'])
 
-        if song_list != []:
+        else:
             for song in song_list:
                 await asyncio.sleep(.1)
                 info = search(song)
 
-                if 'entries' in info.keys():
+                try:
                     for entry in info['entries']:
                         await asyncio.sleep(.1)
 
@@ -307,7 +255,7 @@ class MusicCommands(commands.Cog):
                         queue_dict[ctx.guild.id].enqueue(song)
                         title_list.append(entry['title'])
 
-                else:
+                except KeyError:
                     song = Song(
                         title=info['title'],
                         url=info['webpage_url'].removesuffix('#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D'),
@@ -316,23 +264,9 @@ class MusicCommands(commands.Cog):
                     queue_dict[ctx.guild.id].enqueue(song)
                     title_list.append(info['title'])
 
-                if voice.is_playing() is True:
-                    pass
-                else:
-                    if queue_dict[ctx.guild.id].end_of_queue is True:
-                        await queue_dict[ctx.guild.id].play_last()
-                    else:
-                        await queue_dict[ctx.guild.id].play_next()
-                    queue_dict[ctx.guild.id].voice.resume()
+                await queue_dict[ctx.guild.id].check_if_playing()
 
-        if voice.is_playing() is True:
-            pass
-        else:
-            if queue_dict[ctx.guild.id].end_of_queue is True:
-                await queue_dict[ctx.guild.id].play_last()
-            else:
-                await queue_dict[ctx.guild.id].play_next()
-            queue_dict[ctx.guild.id].voice.resume()
+        await queue_dict[ctx.guild.id].check_if_playing()
 
         embed_desc = '\n'.join(
             f'{x}'
@@ -375,26 +309,14 @@ class MusicCommands(commands.Cog):
 
     @commands.command(name="clear")
     async def clear(self, ctx):
+        voice = await get_voice(ctx, self.bot)
 
-        try:
-            voice_channel = ctx.author.voice.channel
-        # if author is not in a voice channel this will run
-        except AttributeError as e:
-            print(e)
-            await ctx.send("You are not connected to a voice channel.")
-            return
-
-        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        if not voice:
-            await voice_channel.connect()
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        queue_dict[ctx.guild.id].clear()
-        voice.stop()
-        await ctx.send("The queue has been cleared.")
+        if voice:
+            queue_dict[ctx.guild.id].clear()
+            voice.stop()
+            await ctx.channel.send("The queue has been cleared.")
+        else:
+            await ctx.channel.send("You are not in a voice channel.")
 
 ############-NOWPLAYING COMMAND-###############################################################################
 
@@ -414,132 +336,75 @@ Posistion: {queue_dict[ctx.guild.id].current().number_in_queue}"""
     @commands.command(name="pause", case_insensitive=True)
     async def pause(self, ctx):
 
-        try:
-            voice_channel = ctx.author.voice.channel
-        # if author is not in a voice channel this will run
-        except AttributeError as e:
-            print(e)
-            await ctx.send("You are not connected to a voice channel.")
-            return
-
-        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        if not voice:
-            await voice_channel.connect()
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        if voice.is_paused() is False:
-            voice.pause()
-            await ctx.send("The player has been paused.")
+        voice = await get_voice(ctx, self.bot)
+        if voice:
+            if voice.is_paused() is False:
+                voice.pause()
+                await ctx.send("The player has been paused.")
+            else:
+                await ctx.send("The player is already paused.")
         else:
-            await ctx.send("The player is already paused.")
+            await ctx.send("You are not in a voice channel.")
 
 ############-UNPAUSE COMMAND-##################################################################################
 
     @commands.command(name="unpause", aliases=["resume"], case_insensitive=True)
     async def unpause(self, ctx):
-
-        try:
-            voice_channel = ctx.author.voice.channel
-        # if author is not in a voice channel this will run
-        except AttributeError as e:
-            print(e)
-            await ctx.send("You are not connected to a voice channel.")
-            return
-
-        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        if not voice:
-            await voice_channel.connect()
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        voice.resume()
-        await ctx.send("The queue has been un-paused.")
+        voice = await get_voice(ctx, self.bot)
+        if voice:
+            voice.resume()
+            await ctx.send("The queue has been un-paused.")
+        else:
+            await ctx.send("You are not in a voice channel.")
 
 ############-SKIP COMMAND-#####################################################################################
 
     @commands.command(name="next", aliases=["skip"], case_insensitive=True)
     async def next(self, ctx):
-        try:
-            voice_channel = ctx.author.voice.channel
-        # if author is not in a voice channel this will run
-        except AttributeError as e:
-            print(e)
-            await ctx.send("You are not connected to a voice channel.")
-            return
-
-        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        if not voice:
-            await voice_channel.connect()
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        await ctx.channel.send("Skipped the current song.")
-
-        voice.stop()
+        voice = await get_voice(ctx, self.bot)
+        if voice:
+            voice.stop()
+            await ctx.channel.send("Skipped the current song.")
+        else:
+            await ctx.channel.send("You are not in a voice channel.")
 
 ############-GOTO COMMAND-#####################################################################################
 
     @commands.command(name="goto", aliases=["jumpto"], case_insensitive=True)
     async def goto(self, ctx, arg: int):
-        try:
-            voice_channel = ctx.author.voice.channel
-        # if author is not in a voice channel this will run
-        except AttributeError as e:
-            print(e)
-            await ctx.send("You are not connected to a voice channel.")
-            return
+        voice = await get_voice(ctx, self.bot)
 
-        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        if not voice:
-            await voice_channel.connect()
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        queue_dict[ctx.guild.id].move_to(arg)
-
-        await ctx.channel.send(f"Skipped to {arg} in queue.")
+        if voice:
+            queue_dict[ctx.guild.id].move_to(arg)
+            await ctx.channel.send(f"Skipped to {arg} in queue.")
+        else:
+            await ctx.channel.send("You are not in a voice channel.")
 
 ############-LEAVE COMMAND-####################################################################################
 
     @commands.command(name="leave", aliases=["fuckoff", "disconnect", "quit", "stop"], case_insensitive=True)
     async def leave(self, ctx):
-        try:
-            voice_channel = ctx.author.voice.channel
-        # if author is not in a voice channel this will run
-        except AttributeError as e:
-            print(e)
-            await ctx.send("You are not connected to a voice channel.")
-            return
-
-        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
-        if not voice:
-            await voice_channel.connect()
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            await ctx.guild.change_voice_state(channel=voice_channel, self_mute=False, self_deaf=True)
-
+        voice = await get_voice(ctx, self.bot)
         await voice.disconnect()
         del queue_dict[ctx.guild.id]
-
         await ctx.send("The bot has left the voice channel, and the queue has been cleared.")
 
 ############-REMOVE COMMAND-###################################################################################
 
     @commands.command(name="remove", case_insensitive=True)
     async def remove(self, ctx, arg: int):
-        if arg == queue_dict[ctx.guild.id].current().number_in_queue:
-            await ctx.channel.send("You can't remove the currently playing song.")
-            return
-        removed_song = queue_dict[ctx.guild.id].songs.pop(arg - 1)
-        queue_dict[ctx.guild.id].validate_track_order()    
-        await ctx.channel.send(f"Removed {removed_song.title} from the queue.")
+        voice = await get_voice(ctx, self.bot)
+        if voice:
+            if arg == queue_dict[ctx.guild.id].current().number_in_queue:
+                await ctx.channel.send("You can't remove the currently playing song.")
+                return
+
+            removed_song = queue_dict[ctx.guild.id].songs.pop(arg - 1)
+
+            if arg - 1 < queue_dict[ctx.guild.id].current_pos:
+                queue_dict[ctx.guild.id].current_pos += 1
+
+            queue_dict[ctx.guild.id].validate_track_order()    
+            await ctx.channel.send(f"Removed {removed_song.title} from the queue.")
+        else:
+            await ctx.channel.send("You are not in a voice channel.")

@@ -29,8 +29,8 @@ class Queue:
     songs: list
     current_pos: int
     loop: bool
-    voice: object
-    bot: object
+    voice: discord.VoiceState
+    bot: discord.ext.commands.Bot
     ctx: discord.ext.commands.Context
     end_of_queue: bool = False
 
@@ -58,6 +58,16 @@ class Queue:
             i.number_in_queue = a
             a += 1
 
+    async def check_if_playing(self):
+        if self.voice.is_playing() is True:
+            pass
+        else:
+            if self.end_of_queue is True:
+                await self.play_last()
+            else:
+                await self.play_next()
+            self.voice.resume()
+
     # play from the current posistion of the queue
     async def play(self):
         if self.len() != 0:
@@ -74,7 +84,7 @@ class Queue:
             # playing the music, this also calls the play next function again when its done
             try:
                 voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
-            except discord.errors.ClientException:
+            except (discord.errors.ClientException, AttributeError):
                 print("Not connected to voice. Exiting.")
 
             # send a message for the music that we are now playing
@@ -107,13 +117,16 @@ class Queue:
             # playing the music, this also calls this function again when its done
             try:
                 voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
-            except discord.errors.ClientException:
+            except (discord.errors.ClientException, AttributeError):
                 print("Not connected to voice. Exiting.")
 
             if paused is True:
-                voice.pause()
+                try:
+                    voice.pause()
+                except AttributeError:
+                    print("Not connected to voice, can not pause.")
 
-            if voice.is_paused() is False:
+            if voice.is_paused() is False or self.end_of_queue is False:
                 # send a message for the music that we are now playing
                 await self.ctx.send(f"Now playing: {self.current().title}")
 
@@ -165,16 +178,21 @@ class Queue:
             # playing the music, this also calls this function again when its done
             try:
                 voice.play(source, after=lambda x: self.bot.loop.create_task(self.play_next()))
-            except discord.errors.ClientException:
+            except (discord.errors.ClientException, AttributeError):
                 print("Not connected to voice. Exiting.")
 
             if paused is True:
-                voice.pause()
+                try:
+                    voice.pause()
+                except AttributeError:
+                    print("Not connected to voice, can not pause.")
 
-            # if the player is not paused
-            if paused is False:
+            if paused is False or self.end_of_queue is False and self.voice.channel.members != 0:
                 # send a message for the music that we are now playing
-                await self.ctx.send(f"Now playing: {self.current().title}")
+                try:
+                    await self.ctx.send(f"Now playing: {self.current().title}")
+                except RuntimeError:
+                    print("The connection was closed cannot send message.")
 
             self.voice = voice
             self.end_of_queue = False

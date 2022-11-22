@@ -5,6 +5,7 @@ import asyncio
 from config import config
 from cogs.Unbound.unbound import UnboundCommands
 from cogs.Music.music import MusicCommands
+from cogs.Music.music import queue_dict
 from cogs.Moderation.moderation import ModerationCommands
 from cogs.LevelSystem.levelsystem import LevelSystemCommands
 
@@ -34,14 +35,30 @@ async def on_command_error(ctx, error):
         await ctx.reply(f"Command {missing_command} was not found.", mention_author=False)
 
 
+guild_timer_dict = {}
+
+
 @bot.event
 async def on_voice_state_update(member, before, after):
     voice_state = member.guild.voice_client
     if voice_state is None:
         return
 
-    if len(voice_state.channel.members) == 1:
-        await voice_state.disconnect()
+    if member.guild.id not in guild_timer_dict:
+        guild_timer_dict[member.guild.id] = 1
+
+    while len(voice_state.channel.members) == 1:
+
+        await asyncio.sleep(1)
+        guild_timer_dict[member.guild.id] += 1
+
+        if guild_timer_dict[member.guild.id] >= 31:
+            await voice_state.disconnect()
+            await queue_dict[member.guild.id].ctx.send("The voice channel is empty, the bot is leaving.")
+            return
+
+        if len(voice_state.channel.members) > 1:
+            guild_timer_dict[member.guild.id] = 1
 
 ###############################################################################################################
 
